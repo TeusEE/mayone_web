@@ -29,11 +29,7 @@ export const getPublicBranches = () => getPublicRecords(branches);
 export const getPublicBrandCopy = (): BrandContent | undefined => getPublicRecords(brandCopy)[0];
 export function getBrandCopyForDevelopmentReview(): BrandContent | undefined {
   const publicCopy = getPublicBrandCopy();
-  const allowDraftPreview =
-    process.env.NODE_ENV === "development" ||
-    (process.env.VERCEL_ENV === "preview" && process.env.MAYONE_PREVIEW_DRAFT_CONTENT === "true");
-
-  if (publicCopy || !allowDraftPreview) return publicCopy;
+  if (publicCopy || process.env.NODE_ENV !== "development") return publicCopy;
   return brandCopy.records[0];
 }
 export const getPublicDesigners = () => getPublicRecords(designers);

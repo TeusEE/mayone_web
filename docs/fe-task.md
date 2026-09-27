@@ -93,7 +93,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - 우선순위: P0 / 요구사항: FE-02 / 의존성: FE-T03~FE-T06
 - [x] 원본의 브랜드 약속·설명·세 CTA를 `#top`에 반영한다.
 - [x] `ONE BRAND. ONE SYSTEM.`과 SALON → SYSTEM → EDUCATION → ACADEMY → BUSINESS 성장 흐름을 구현한다.
-- [x] 미승인 브랜드 원고는 개발 미리보기와 `MAYONE_PREVIEW_DRAFT_CONTENT=true`인 Preview에서 검수 배너와 함께 표시하고, Production에는 준비 상태를 유지한다.
+- [x] 미승인 브랜드 원고는 개발 미리보기에서만 표시하고 Production에는 준비 상태를 유지한다.
 - [ ] 320~1440px 브라우저에서 제목 줄바꿈·CTA 위치·첫 화면 높이를 다시 확인한다.
 
 ### FE-T08. 살롱·성장 시스템
@@ -260,7 +260,8 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 
 - 우선순위: P0 / 요구사항: PRD §9, NFR-03·NFR-04 / 의존성: FE-T21~FE-T23
 - [x] Vercel 프로젝트 `mayone-home`를 생성하고 최초 Production 준비 페이지가 HTTP 200으로 응답하는지 확인한다.
-- [x] Preview 전용 `MAYONE_PREVIEW_DRAFT_CONTENT=true`를 설정하고, 검수 배너·검색 제외와 원고 노출을 Preview URL에서 확인한다: https://mayone-home-geyfe0aim-teus-ee-s-projects.vercel.app
+- [x] Preview에서 요청 문구·줄바꿈·검수 배너·검색 제외를 확인한 테스트 배포를 제거하고 테스트 전용 원고 노출을 롤백했다 (체크포인트 `73d032c`).
+- [x] 롤백한 코드를 Preview에 다시 배포해 준비 안내 상태를 확인한다: https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app
 - [ ] 운영 브랜치의 검증된 버전을 배포하고 공식 도메인·HTTPS·canonical·사이트맵·robots·공유 이미지를 확인한다.
 - [ ] Production에서 fixture·draft·임시 로고·예시 연락처가 노출되지 않고 공개 CTA만 활성화되는지 확인한다.
 - [ ] 주요 여정·직접 URL·404·모바일 메뉴·외부 링크를 간단히 재확인한다.
