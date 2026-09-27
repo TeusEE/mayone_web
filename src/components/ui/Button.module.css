@@ -1,0 +1,77 @@
+.button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 0.875rem 1.375rem;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-input);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 550;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+
+.primary {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: #fff;
+}
+
+.primary:hover {
+  border-color: #34332f;
+  background: #34332f;
+}
+
+.secondary {
+  border-color: var(--color-text);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.secondary:hover {
+  border-color: var(--color-text);
+  background: var(--color-text);
+  color: #fff;
+}
+
+.quiet {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.quiet:hover {
+  background: var(--color-surface-soft);
+}
+
+.button:disabled {
+  border-color: var(--color-border);
+  background: var(--color-surface-soft);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+@media (max-width: 39.99rem) {
+  .button {
+    padding-inline: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+}

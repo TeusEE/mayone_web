@@ -1,0 +1,467 @@
+.landing {
+  overflow: clip;
+}
+
+.previewBanner {
+  margin: 0;
+  padding: 0.5rem var(--page-gutter);
+  background: var(--color-text);
+  color: var(--color-surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.hero {
+  display: grid;
+  min-height: 82vh;
+  min-height: 82svh;
+  padding: 5rem var(--page-gutter);
+  place-items: center;
+  background: radial-gradient(circle at 50% 20%, #fff 0, #f8f4ea 46%, #eee7da 100%);
+  text-align: center;
+}
+
+.heroInner,
+.inner {
+  width: min(100%, var(--content-wide));
+  margin-inline: auto;
+}
+
+.heroInner {
+  max-width: 58rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--color-accent-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  line-height: 1.5;
+}
+
+.hero h1 {
+  margin: 1.125rem 0 0.5rem;
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  line-height: 1.1;
+  text-wrap: balance;
+}
+
+.hero h2 {
+  margin: 0.625rem 0;
+  font-size: clamp(1.5625rem, 4vw, 2.875rem);
+  font-weight: 650;
+  line-height: 1.4;
+  text-wrap: balance;
+}
+
+.lead {
+  max-width: 43.75rem;
+  margin: 1.25rem auto 0;
+  color: var(--color-text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.buttonRow,
+.buttonRowLeft {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.buttonRow {
+  justify-content: center;
+}
+
+.buttonRowLeft {
+  justify-content: flex-start;
+}
+
+.section {
+  padding-block: 6.875rem;
+}
+
+.alt {
+  background: var(--color-page);
+  background: var(--color-surface-soft);
+}
+
+.sectionTitle {
+  max-width: 19ch;
+  margin: 0.5rem 0 1.375rem;
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: clamp(2.125rem, 5vw, 3.875rem);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  line-height: 1.24;
+  text-wrap: balance;
+  white-space: pre-line;
+}
+
+.sectionSubTitle {
+  margin: 0 0 0.875rem;
+  font-size: clamp(1.375rem, 2.7vw, 1.625rem);
+  font-weight: 600;
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+.copy {
+  max-width: 45rem;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.9;
+  text-wrap: pretty;
+}
+
+.flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 2.625rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flowStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pill {
+  display: inline-flex;
+  min-height: 3.25rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
+}
+
+.arrow {
+  color: var(--color-accent);
+  font-size: 1.125rem;
+}
+
+.split {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  align-items: center;
+  gap: 4.375rem;
+}
+
+.hairVisual,
+.marketVisual {
+  display: flex;
+  min-height: 29.375rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  background: linear-gradient(145deg, #e8e1d3, #fff 45%, #ded4c2);
+  text-align: center;
+}
+
+.visualMark,
+.marketVisualMark {
+  color: #9c7733;
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: clamp(3.5rem, 7vw, 4.5rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+}
+
+.visualLabel {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.14em;
+}
+
+.visualCaption {
+  margin-top: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.cardGrid {
+  display: grid;
+  gap: 1.125rem;
+  margin: 2.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.systemGrid,
+.trackGrid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.principleGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.ecosystemGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  min-height: 11.875rem;
+  padding: 1.875rem;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.cardLabel {
+  display: block;
+  margin-bottom: 0.875rem;
+  color: var(--color-accent-text);
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  line-height: 1.5;
+}
+
+.card h3,
+.card h4 {
+  margin: 0 0 0.625rem;
+  font-size: 1.125rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.card p {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.7;
+  text-wrap: pretty;
+}
+
+.haruEnglish {
+  margin: 0.5rem 0 0.875rem;
+  font-family: Georgia, serif;
+  font-size: clamp(2.5rem, 6.5vw, 4.75rem);
+  font-weight: 500;
+  letter-spacing: 0.015em;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.market {
+  background: var(--color-dark);
+  color: var(--color-dark-text);
+}
+
+.market .sectionTitle,
+.market .sectionSubTitle {
+  color: var(--color-dark-text);
+}
+
+.market .eyebrow {
+  color: #c8a65a;
+}
+
+.market .copy {
+  color: var(--color-dark-muted);
+}
+
+.marketTitle {
+  margin: 0.5rem 0 1.125rem;
+  font-family: Georgia, serif;
+  font-size: clamp(2.625rem, 5vw, 3.875rem);
+  font-weight: 500;
+  letter-spacing: 0.035em;
+  line-height: 1.16;
+  white-space: pre-line;
+}
+
+.marketVisual {
+  min-height: 29.375rem;
+  border-color: #3b372f;
+  background: linear-gradient(145deg, #24211c, var(--color-dark));
+}
+
+.marketVisualMark {
+  color: #c8a65a;
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+}
+
+.marketVisualText {
+  margin-top: 0.75rem;
+  color: #d8d0c1;
+  font-size: 1rem;
+  letter-spacing: 0.16em;
+}
+
+.marketVisualCaption {
+  margin-top: 0.75rem;
+  color: var(--color-dark-muted);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.marketAction {
+  border-color: #fff !important;
+  background: transparent !important;
+  color: #fff !important;
+}
+
+.marketAction:hover:not(:disabled) {
+  background: #fff !important;
+  color: #171613 !important;
+}
+
+.marketAction:disabled {
+  border-color: #77736b !important;
+  background: transparent !important;
+  color: #bdb7ac !important;
+}
+
+.smallNote {
+  margin: 1rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.closing {
+  padding: 8.125rem var(--page-gutter);
+  background: var(--color-surface-soft);
+  text-align: center;
+}
+
+.closingInner {
+  max-width: 52rem;
+  margin-inline: auto;
+}
+
+.closing h2 {
+  margin: 0 0 0.875rem;
+  font-family: Georgia, serif;
+  font-size: clamp(2.625rem, 7vw, 5.25rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.closing .lead {
+  margin-top: 0;
+}
+
+.market .smallNote {
+  color: var(--color-dark-muted);
+}
+
+.closingMarketAction {
+  border-color: var(--color-text) !important;
+  background: transparent !important;
+  color: var(--color-text) !important;
+}
+
+.closingMarketAction:hover:not(:disabled) {
+  background: var(--color-text) !important;
+  color: var(--color-surface) !important;
+}
+
+.closingMarketAction:disabled {
+  border-color: var(--color-border) !important;
+  background: transparent !important;
+  color: var(--color-text-muted) !important;
+}
+
+.preparingPage {
+  padding-block: clamp(5rem, 12vw, 9rem);
+}
+
+.preparingTitle {
+  margin: 0.5rem 0 2rem;
+  font-family: Georgia, serif;
+  font-size: clamp(3rem, 8vw, 6.5rem);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+
+@media (max-width: 62.5rem) {
+  .systemGrid,
+  .trackGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .principleGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 50rem) {
+  .hero {
+    min-height: 75vh;
+    min-height: 75svh;
+  }
+
+  .section {
+    padding-block: 4.6875rem;
+  }
+
+  .split,
+  .systemGrid,
+  .principleGrid,
+  .trackGrid,
+  .ecosystemGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .split {
+    gap: 2.5rem;
+  }
+
+  .hairVisual,
+  .marketVisual {
+    min-height: 18.75rem;
+  }
+
+  .card {
+    min-height: auto;
+  }
+
+  .closing {
+    padding-block: 6.25rem;
+  }
+}
+
+@media (max-width: 35rem) {
+  .flow {
+    gap: 0.625rem;
+  }
+
+  .flowStep {
+    gap: 0.625rem;
+  }
+
+  .pill {
+    min-height: 2.875rem;
+    padding-inline: 0.875rem;
+    font-size: 0.75rem;
+  }
+
+  .arrow {
+    font-size: 0.875rem;
+  }
+}

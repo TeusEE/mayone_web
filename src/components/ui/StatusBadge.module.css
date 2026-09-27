@@ -1,0 +1,26 @@
+.badge {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.open {
+  border-color: var(--color-text-secondary);
+  background: var(--color-text-secondary);
+  color: var(--color-surface);
+}
+
+.closed,
+.ended,
+.error {
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}

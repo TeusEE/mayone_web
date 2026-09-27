@@ -1,0 +1,38 @@
+.field {
+  display: grid;
+  min-width: 0;
+  gap: 0.375rem;
+}
+
+.label {
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.control {
+  width: 100%;
+  min-height: 3.625rem;
+  padding: 0.75rem 0.875rem;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  font-size: 1rem;
+}
+
+.control:hover:not(:disabled) {
+  border-color: var(--color-text-secondary);
+}
+
+.control:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+}
+
+.hint {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}

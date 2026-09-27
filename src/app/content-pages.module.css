@@ -1,0 +1,292 @@
+.page {
+  width: min(calc(100% - 2 * var(--page-gutter)), var(--content-wide));
+  min-height: min(70vh, 48rem);
+  margin-inline: auto;
+  padding-block: clamp(4rem, 10vw, 8rem);
+}
+
+.narrow {
+  max-width: var(--content-narrow);
+}
+
+.lead {
+  max-width: 46rem;
+  margin: 0 0 var(--space-8);
+  color: var(--color-text-secondary);
+  font-size: 1.0625rem;
+  line-height: 1.85;
+}
+
+.previewNotice {
+  margin: 0 0 var(--space-8);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--color-accent);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  align-items: end;
+  gap: var(--space-4);
+  margin-block: var(--space-8) var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface-soft);
+}
+
+.resultsLine {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+}
+
+.cardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  gap: var(--space-5);
+}
+
+.card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: 1.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.cardTitle {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.25rem;
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.cardEyebrow {
+  margin: 0 0 -0.5rem;
+  color: var(--color-accent-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.5;
+}
+
+.cardTitle a {
+  color: inherit;
+  text-decoration: none;
+  text-underline-offset: 0.25em;
+}
+
+.cardTitle a:hover {
+  text-decoration: underline;
+}
+
+.cardMeta,
+.plainList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  color: var(--color-text-secondary);
+  list-style: none;
+}
+
+.cardMeta li,
+.plainList li {
+  line-height: 1.65;
+}
+
+.badgeRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+
+.cardActions > * {
+  max-width: 100%;
+}
+
+.section {
+  margin-block-start: clamp(3rem, 8vw, 5rem);
+}
+
+.sectionTitle {
+  margin: 0 0 var(--space-5);
+  font-family: Georgia, "Noto Serif KR", serif;
+  font-size: clamp(2.125rem, 4.5vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.24;
+  white-space: pre-line;
+  text-wrap: balance;
+}
+
+.sectionLead {
+  max-width: 46rem;
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-secondary);
+  line-height: 1.8;
+}
+
+.splitGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-5);
+}
+
+.detailHero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(16rem, 0.8fr);
+  align-items: start;
+  gap: clamp(var(--space-6), 6vw, var(--space-12));
+  margin-block: var(--space-8);
+}
+
+.detailTitle {
+  margin: 0 0 var(--space-4);
+  font-size: clamp(2rem, 6vw, 4rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.bodyCopy {
+  max-width: 48rem;
+  color: var(--color-text-secondary);
+  line-height: 1.85;
+}
+
+.bodyCopy p {
+  margin: 0 0 var(--space-4);
+}
+
+.media {
+  position: relative;
+  width: 100%;
+  max-height: 34rem;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--color-surface-soft);
+}
+
+.media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.flowGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: var(--space-4);
+  counter-reset: flow;
+}
+
+.flowItem {
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  counter-increment: flow;
+}
+
+.flowItem::before {
+  display: block;
+  margin-bottom: var(--space-3);
+  color: var(--color-text-secondary);
+  content: "0" counter(flow);
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.flowName {
+  margin: 0 0 var(--space-2);
+  font-size: 1.125rem;
+  line-height: 1.4;
+}
+
+.muted {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.7;
+}
+
+.infoGrid {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.35fr) minmax(0, 1fr);
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+}
+
+.infoGrid dt {
+  font-weight: 700;
+}
+
+.infoGrid dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.actionNote {
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.textLink {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  font-weight: 700;
+  text-underline-offset: 0.25em;
+}
+
+@media (max-width: 44rem) {
+  .detailHero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .media {
+    max-height: 24rem;
+  }
+}
+
+@media (max-width: 30rem) {
+  .filters {
+    padding: var(--space-4);
+  }
+
+  .card {
+    padding: var(--space-4);
+  }
+
+  .infoGrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+  }
+
+  .infoGrid dd + dt {
+    margin-top: var(--space-3);
+  }
+}

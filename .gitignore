@@ -1,0 +1,26 @@
+# dependencies and build output
+/node_modules/
+/.next/
+/out/
+/build/
+
+# local environment files
+.env*
+!.env.example
+
+# editor and operating system files
+.DS_Store
+*.log
+.idea/
+.vscode/
+
+# generated Next.js types
+/next-env.d.ts
+.vercel
+
+# generated browser review captures and incremental build state
+.playwright-mcp/
+*.tsbuildinfo
+
+# private source conversation export
+/origin_source/KakaoTalk_Chat_*.txt
