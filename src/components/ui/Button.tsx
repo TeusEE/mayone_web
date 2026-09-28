@@ -47,6 +47,14 @@ export function ButtonLink({
     );
   }
 
+  if (href.startsWith("#")) {
+    return (
+      <a className={classes} href={href} onClick={onClick} aria-label={ariaLabel}>
+        {children}
+      </a>
+    );
+  }
+
   return (
     <Link className={classes} href={href} onClick={onClick} aria-label={ariaLabel}>
       {children}

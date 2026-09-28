@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEventHandler, type ReactNode } from "react";
 import styles from "./Header.module.css";
 
 const navigation = [
@@ -15,10 +15,10 @@ const navigation = [
 
 export function Header() {
   const pathname = usePathname();
-  return <HeaderFrame key={pathname} />;
+  return <HeaderFrame key={pathname} pathname={pathname} />;
 }
 
-function HeaderFrame() {
+function HeaderFrame({ pathname }: { pathname: string }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -72,15 +72,15 @@ function HeaderFrame() {
     <>
       <header className={styles.header}>
         <div className={styles.bar}>
-          <Link className={styles.brand} href="/#top" aria-label="MAY.ONE 홈">
+          <HeaderLink pathname={pathname} className={styles.brand} href="/#top" ariaLabel="MAY.ONE 홈">
             MAY.ONE
-          </Link>
+          </HeaderLink>
           <nav className={styles.desktopNav} aria-label="주요 메뉴">
             {navigation.map((item) => (
-              <Link className={styles.navLink} href={item.href} key={item.label}>
+              <HeaderLink className={styles.navLink} href={item.href} key={item.label} pathname={pathname}>
                 <span>{item.label}</span>
                 <span className="srOnly">: {item.description}</span>
-              </Link>
+              </HeaderLink>
             ))}
           </nav>
           <button
@@ -129,20 +129,51 @@ function HeaderFrame() {
             </div>
             <nav aria-label="모바일 주요 메뉴" className={styles.mobileNav}>
               {navigation.map((item) => (
-                <Link
+                <HeaderLink
                   className={styles.mobileLink}
                   href={item.href}
                   key={item.label}
+                  pathname={pathname}
                   onClick={() => closeMenu(false)}
                 >
                   <span>{item.label}</span>
                   <span className="srOnly">: {item.description}</span>
-                </Link>
+                </HeaderLink>
               ))}
             </nav>
           </aside>
         </>
       ) : null}
     </>
+  );
+}
+
+function HeaderLink({
+  pathname,
+  href,
+  className,
+  children,
+  ariaLabel,
+  onClick,
+}: {
+  pathname: string;
+  href: string;
+  className: string;
+  children: ReactNode;
+  ariaLabel?: string;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
+}) {
+  if (pathname === "/" && href.startsWith("/#")) {
+    return (
+      <a className={className} href={href.slice(1)} aria-label={ariaLabel} onClick={onClick}>
+        {children}
+      </a>
+    );
+  }
+
+  return (
+    <Link className={className} href={href} aria-label={ariaLabel} onClick={onClick}>
+      {children}
+    </Link>
   );
 }
