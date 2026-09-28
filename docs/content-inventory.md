@@ -1,7 +1,7 @@
 # MAY.ONE 홈페이지 콘텐츠·자료 현황
 
-기준일: 2026-09-27  
-기준: `fe-prd.md` §3.3·§11, `origin_source/mayone_homepage.html`, `origin_source/webpage_contents.md`, `origin_source/KakaoTalk_Chat_2026-09-27-18-51-45.txt`, [메이원헤어 소개.pdf](../origin_source/%EB%A9%94%EC%9D%B4%EC%9B%90%ED%97%A4%EC%96%B4%20%EC%86%8C%EA%B0%9C.pdf)
+- 기준일: 2026-09-28
+- 기준: `fe-prd.md` §3.3·§11, `origin_source/mayone_homepage.html`, `origin_source/webpage_contents.md`, `origin_source/KakaoTalk_Chat_2026-09-27-18-51-45.txt`, [메이원헤어 소개.pdf](../origin_source/%EB%A9%94%EC%9D%B4%EC%9B%90%ED%97%A4%EC%96%B4%20%EC%86%8C%EA%B0%9C.pdf)
 
 `origin_source/mayone_homepage.html`은 메인·공통 헤더·푸터의 카피와 디자인 기준입니다. `webpage_contents.md`, PDF, 대화 기록은 지점·교육·채용·협력 등 개별 운영자료의 검토 후보로만 사용합니다. 원본 HTML과 다른 추가 랜딩 카피나 구역을 만들지 않습니다.
 
@@ -37,7 +37,7 @@
 | 산학협력 기관·문의 | 소개자료에 정화예술대학교 표기 후보, 문의 채널 없음 | 검토 필요 | 협력 관계·담당 채널·사례·기관 로고 공개 승인 필요 |
 | 시장·대표 상품 링크 | 공식 스토어 `https://smartstore.naver.com/mayone-market` (담당자 제공); 대표 상품 후보 `https://naver.me/FM9zFgIA` | 스토어 주소 반영·CTA 활성; 대표 상품은 목적지·판매 상태 미확인 | 자동 접근 점검은 SmartStore의 HTTP 429로 완료하지 못함. 실제 브라우저에서 스토어 접속을 확인하고, 상품명·최종 URL·판매 상태를 검증한 뒤 대표 상품 CTA를 활성화 |
 | 운영·정책 정보 | 사업자·대표 연락처·개인정보처리방침·약관·권리자 없음 | 미확보 | 임의 연락처·정책·저작권 문구를 만들지 않음 |
-| 도메인·배포 | Vercel 프로젝트 `mayone-home`; Production `https://mayone-home.vercel.app` (배포 `dpl_Ffjr58VKjSw4zTVFEJQUCRZ2xo2U`); 롤백 Preview `https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app`; 로컬 Git `main` | Production 브랜드 카피 공개 완료, 공식 도메인·Git 원격 미확정 | 원격 저장소·브랜치 연결, 공식 HTTPS 도메인, canonical·공유 주소 확정이 필요하다. `NEXT_PUBLIC_SITE_URL`은 공식 origin 확정 후 설정 |
+| 도메인·배포 | GitHub `https://github.com/TeusEE/mayone_web.git`의 `main`에 `55a7765`까지 push; Vercel `mayone-home` Production `https://mayone-home.vercel.app` (최신 배포 `dpl_CRwnAfVEbT6hm61ecqWrwhTV5C8p`); 롤백 Preview `https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app` | Production 배포·HTTP 200 확인. 별도 공식 도메인과 Vercel Git 자동 배포 연동은 미설정 | push 후 CLI로 수동 배포하고 있다. 공식 HTTPS 도메인과 canonical·공유 주소를 확정한 뒤 `NEXT_PUBLIC_SITE_URL`을 설정한다. Vercel Git 자동 연동은 별도 작업 |
 
 자료 담당 역할은 `fe-task.md` §8에 기록합니다. 운영팀 확인 전까지 앱 콘텐츠 데이터의 `sourceState`는 `pending`, 원고·후보 레코드는 `publicationState: draft`, `reviewState: pending`으로 둡니다. 공개 조회는 두 상태가 모두 확정된 레코드만 반환합니다.
 
@@ -47,4 +47,6 @@
 
 ## 원본 HTML 정렬 후 검사
 
-2026-09-27 기준 `npm run lint`, `npm run typecheck`, `npm run content:validate`, `npm run content:test`, `npm run build`가 모두 통과했습니다. 요청에 따라 개발 서버를 중지한 상태로 유지했으며, 3000번 포트에 수신 중인 서버가 없는 것을 확인했습니다. 따라서 새 헤더·랜딩·푸터의 브라우저별 시각 확인, 모바일 메뉴 동작 재검수와 직접 URL 점검은 아직 수행하지 않았고 [fe-task.md](./fe-task.md)의 FE-T20~FE-T21에 남겼습니다. 공식 사진·로고·도메인·운영 데이터가 필요한 이미지·Lighthouse·canonical 공개 검수도 자료 확보 후 진행합니다.
+2026-09-28 최신 앵커 수정(`55a7765`)에서 `npm run lint`, `npm run typecheck`, `npm run build`와 Vercel Production build가 통과했습니다. 콘텐츠 검증·상태 테스트의 완료 기록은 [fe-task.md](./fe-task.md) FE-T19에 있습니다. 모바일 좌우 여백은 Playwright MCP로 CSS 폭 320, 375, 390px에서 확인했습니다. 같은 `#haru`·`#market` 앵커의 반복 이동은 Preview와 Production의 390×844 모바일에서, Preview의 1280px 데스크톱에서 확인했습니다. Production URL은 HTTP 200으로 응답하며 최신 배포 내용으로 메인 앵커가 동작합니다.
+
+아직 확인할 항목은 768, 1024, 1440px의 전체 화면, 상세·목록의 직접 URL과 404, 외부 CTA의 실제 최종 목적지, 키보드 포커스·Escape·200% 확대·reduced-motion, 이미지와 Lighthouse입니다. 공식 사진·로고·운영 데이터·도메인에 의존하는 항목은 자료 확보 후 진행합니다. 요청에 따라 로컬 개발 서버는 중지 상태이며 3000번 포트에 수신 프로세스가 없는 것을 확인했습니다.
