@@ -37,7 +37,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const branches = getPublicBranches();
   if (branches.length > 0) {
     add("/salon", latestDate(branches.map((branch) => branch.confirmedAt))?.toISOString());
-    for (const branch of branches) add(`/salon/${encodeURIComponent(branch.id)}`, branch.confirmedAt);
   }
 
   const classes = getPublicClasses();

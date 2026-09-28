@@ -8,7 +8,7 @@ import styles from "@/app/content-pages.module.css";
 export function generateMetadata() {
   return createPageMetadata({
     title: "메이원헤어 지점",
-    description: "공개가 확인된 메이원헤어 지점의 지역과 방문 안내를 확인할 수 있습니다.",
+    description: "메이원헤어 지점의 주소, 운영시간, 주차, 매장 정보와 네이버 예약 링크를 확인할 수 있습니다.",
     path: "/salon",
     contentAvailable: getPublicBranches().length > 0,
   });
@@ -20,7 +20,7 @@ export default function SalonDirectoryPage() {
 
   return (
     <div className={styles.page}>
-      <SectionHeading eyebrow="MAY.ONE HAIR" title="메이원헤어 지점" description="공개가 확인된 지점의 위치와 방문 안내를 확인할 수 있습니다." />
+      <SectionHeading eyebrow="MAY.ONE HAIR" title="메이원헤어 지점" description="지점별 위치와 운영 정보를 확인하고, 네이버 예약으로 편리하게 방문을 준비하세요." />
       {branches.length > 0 ? (
         <BranchDirectory branches={branches} />
       ) : (

@@ -104,7 +104,7 @@ function validateCollection<T extends ContentRecord>(
 }
 
 function validateBranch(record: Branch): string[] {
-  return [
+  const errors = [
     ...requiredPublished(record, [
       ["공식 지점명", Boolean(record.officialName.trim())],
       ["확정 지역", Boolean(record.region?.trim())],
@@ -113,6 +113,9 @@ function validateBranch(record: Branch): string[] {
     ]),
     ...validateImageAsset(record.image),
   ];
+  if (record.bookingUrl && !isValidExternalUrl(record.bookingUrl)) errors.push("예약 URL은 HTTPS 주소여야 합니다.");
+  if (record.placeUrl && !isValidExternalUrl(record.placeUrl)) errors.push("네이버 플레이스 URL은 HTTPS 주소여야 합니다.");
+  return errors;
 }
 
 function validateDesigner(record: Designer): string[] {

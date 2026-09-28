@@ -71,7 +71,10 @@ export interface Branch extends ContentRecord {
   closedDays?: string;
   phone?: string;
   bookingUrl?: string;
+  placeUrl?: string;
   directions?: string;
+  parking?: string;
+  amenities?: readonly string[];
   image?: ImageAsset;
 }
 

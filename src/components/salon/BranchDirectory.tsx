@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import type { Branch } from "@/types/content";
 import { getBranchBookingAvailability } from "@/lib/actions";
 import { filterBranches, getBranchRegions } from "@/lib/filters";
@@ -22,10 +21,6 @@ export function BranchDirectory({ branches }: BranchDirectoryProps) {
   const [region, setRegion] = useState("");
   const regions = useMemo(() => getBranchRegions(branches), [branches]);
   const filtered = filterBranches(branches, query, region);
-  const reset = () => {
-    setQuery("");
-    setRegion("");
-  };
 
   return (
     <>
@@ -43,9 +38,7 @@ export function BranchDirectory({ branches }: BranchDirectoryProps) {
           value={region}
           onChange={(event) => setRegion(event.target.value)}
           options={[{ label: "전체 지역", value: "" }, ...regions.map((item) => ({ label: item, value: item }))]}
-          hint="공개 지점에 등록된 지역만 표시합니다."
         />
-        <Button type="button" variant="secondary" onClick={reset}>조건 초기화</Button>
       </div>
 
       <p className={styles.resultsLine} aria-live="polite">검색 결과 {filtered.length}개</p>
@@ -53,13 +46,11 @@ export function BranchDirectory({ branches }: BranchDirectoryProps) {
         <EmptyState
           kind="no-results"
           title="조건에 맞는 지점이 없습니다."
-          description="지점명이나 지역을 바꾸거나 조건을 초기화해 보세요."
-          actionLabel="조건 초기화"
-          onAction={reset}
+          description="지점명이나 지역을 바꿔 다시 검색해 보세요."
         />
       ) : (
-        <div className={styles.cardGrid}>
-          {filtered.map((branch) => {
+        <div className={styles.branchList}>
+          {filtered.map((branch, index) => {
             const booking = getBranchBookingAvailability(branch);
             const operationLabel = branch.operationState === "active"
               ? "운영 중"
@@ -67,25 +58,35 @@ export function BranchDirectory({ branches }: BranchDirectoryProps) {
                 ? "운영 종료"
                 : "운영 여부 확인 중";
             return (
-              <article className={styles.card} key={branch.id}>
-                <ContentImage image={branch.image} sizes="(max-width: 44rem) 100vw, 33vw" />
-                <h2 className={styles.cardTitle}><Link href={`/salon/${branch.id}`}>{branch.officialName}</Link></h2>
-                <ul className={styles.cardMeta}>
-                  {branch.region ? <li>{branch.region}</li> : null}
-                  {branch.address ? <li>{branch.address}</li> : null}
-                </ul>
-                <div className={styles.badgeRow}>
+              <article className={styles.branchListing} key={branch.id}>
+                <header className={styles.branchListingHeader}>
+                  <div>
+                    <p className={styles.branchKicker}>MAY.ONE HAIR · LOCATION {String(index + 1).padStart(2, "0")}</p>
+                    <h2 className={styles.branchName}>{branch.officialName}</h2>
+                    {branch.region ? <p className={styles.branchRegion}>{branch.region}</p> : null}
+                  </div>
                   <StatusBadge status={branch.operationState === "active" ? "open" : branch.operationState === "inactive" ? "closed" : "preparing"} label={operationLabel} />
-                </div>
-                <ul className={styles.cardMeta}>
-                  {branch.hours ? <li>운영 시간: {branch.hours}</li> : null}
-                  {branch.closedDays ? <li>휴무: {branch.closedDays}</li> : null}
-                </ul>
-                <div className={styles.cardActions}>
-                  <Link className={styles.textLink} href={`/salon/${branch.id}`}>지점 상세 보기</Link>
+                </header>
+
+                <dl className={styles.branchInfo}>
+                  {branch.address ? <><dt>주소</dt><dd>{branch.address}</dd></> : null}
+                  {branch.phone ? <><dt>매장 번호</dt><dd><a href={`tel:${branch.phone}`}>{branch.phone}</a></dd></> : null}
+                  {branch.hours ? <><dt>운영 시간</dt><dd>{branch.hours}</dd></> : null}
+                  {branch.closedDays ? <><dt>휴무</dt><dd>{branch.closedDays}</dd></> : null}
+                  {branch.parking ? <><dt>주차</dt><dd>{branch.parking}</dd></> : null}
+                  {branch.directions ? <><dt>찾아가는 길</dt><dd>{branch.directions}</dd></> : null}
+                  {branch.amenities?.length ? <><dt>매장 정보</dt><dd>{branch.amenities.join(" · ")}</dd></> : null}
+                </dl>
+
+                {branch.image ? <ContentImage image={branch.image} sizes="(max-width: 44rem) 100vw, 70vw" /> : null}
+
+                <div className={styles.branchListingActions}>
                   {booking.enabled && booking.href ? (
-                    <ButtonLink href={booking.href} external variant="secondary">예약하기</ButtonLink>
-                  ) : <Button disabled variant="secondary">예약 안내 준비 중</Button>}
+                    <ButtonLink className={styles.branchBookingCta} href={booking.href} external ariaLabel={`${branch.officialName} 네이버 예약`}>
+                      <span className={styles.naverMark} aria-hidden="true">N</span>
+                      네이버 예약
+                    </ButtonLink>
+                  ) : <Button disabled className={styles.branchBookingCta}>예약 안내 준비 중</Button>}
                 </div>
               </article>
             );

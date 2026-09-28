@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { branches } from "../src/content/branches";
 import type { AcademyClass, Branch, ContentCollection, JobPosting } from "../src/types/content";
 import { getBranchBookingAvailability, getClassApplicationAvailability, getJobApplicationAvailability, isValidExternalUrl } from "../src/lib/actions";
 import { filterBranches, filterClasses, getBranchRegions } from "../src/lib/filters";
@@ -141,6 +142,22 @@ assert.equal(getBranchBookingAvailability(branch("branch-closed", "운영 종료
 assert.equal(getBranchBookingAvailability(branch("branch-incomplete", "미완성", "", { address: "" })).reason, "incomplete");
 assert.equal(getBranchBookingAvailability(branch("branch-no-url", "예약 없음", "서울", { bookingUrl: undefined })).reason, "missing-url");
 assert.equal(getBranchBookingAvailability(branch("branch-bad-url", "잘못된 URL", "서울", { bookingUrl: "http://example.com" })).reason, "invalid-url");
+
+for (const id of [
+  "asan-tangjeong",
+  "migeum",
+  "western-dom",
+  "yadang",
+  "unjeong",
+  "samsong",
+  "haengdang",
+  "yeongdeungpo-gu-office-mens",
+]) {
+  const publishedBranch = getPublicRecords(branches).find((item) => item.id === id);
+  assert.ok(publishedBranch, `${id} is listed as a public branch`);
+  assert.equal(getBranchBookingAvailability(publishedBranch).enabled, true, `${id} has an active branch reservation link`);
+  assert.ok(publishedBranch.bookingUrl?.includes("pcmap.place.naver.com/hairshop/"), `${id} uses its Naver Place reservation link`);
+}
 
 assert.equal(getClassApplicationAvailability(academyClass(), now).enabled, true);
 assert.equal(getClassApplicationAvailability(academyClass({ publicationState: "draft" }), now).reason, "not-public");

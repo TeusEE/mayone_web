@@ -28,7 +28,7 @@
 | 자료 | 원자료에서 찾은 값 | 현재 상태 | 필요한 확인 / 영향 |
 | --- | --- | --- | --- |
 | 공식 로고·대표 이미지·공유 이미지·favicon | HTML의 `MO`는 임시 그래픽 | 미확보 | 원본 로고, 살롱·교육 이미지와 사용 권한 필요. 공식 에셋이 없어 이미지 공개, OG 이미지, favicon 검수와 Lighthouse 측정 대기 |
-| 12개 지점 후보 | 콘텐츠 원고 §4.6에 이름 12개 | 이름만 있음, pending | 공식명·영업 여부·지역·주소·시간·연락처·사진·예약 URL 확인. `천안아산/아산`, `왕십리·행당/행당` 명칭 관계 확인 |
+| 지점 후보 | 원고에 12개 후보 지점명 및 네이버 검색 결과 | 아산탕정·미금·웨스턴돔·야당·운정·삼송·행당·메이원맨즈헤어 영등포구청점의 네이버 플레이스 위치·운영시간·전화·편의 정보·예약 링크를 2026-09-28 확인해 목록에 공개. 지축(비브헤어)·성수 등 제외/미확인 후보는 공개하지 않음 | 나머지 후보의 공식명·영업 여부·지역·주소·시간·연락처·예약 URL 확인. 모든 실제 지점 사진은 미확보 |
 | 강사·디자이너 후보 | PDF와 원고에 “현직 원장·디자이너·전문 강사진” 등 일반 설명 | 개인 프로필 미확보 | 이름·직책·전문 분야·소개·사진·게시 동의 필요. 현재 이름을 추정하지 않음 |
 | 연혁 후보 | PDF의 2022–2026 개점 기록 | 검토 필요 | 현재 지점명·개점일·동일 지점 관계·HARU 설립과 산학협력 시점 확인. 성장 단계 설명은 날짜 없이 가능 |
 | HARU 주소·SNS | 2026년 8월 PDF: 서울 강남구 신사동 662-15 4F, `@haru_hair_academy`; 원고 내 `@may.one_hair` 표기 | 과거 소개자료 후보, 최신 확인 필요 | 현재 운영 주소·공식 계정 URL·공개할 연락 채널 확인 전 페이지·푸터에 링크하지 않음 |
@@ -37,9 +37,11 @@
 | 산학협력 기관·문의 | 소개자료에 정화예술대학교 표기 후보, 문의 채널 없음 | 검토 필요 | 협력 관계·담당 채널·사례·기관 로고 공개 승인 필요 |
 | 시장·대표 상품 링크 | 공식 스토어 `https://smartstore.naver.com/mayone-market` (담당자 제공); 대표 상품 후보 `https://naver.me/FM9zFgIA` | 스토어 주소 반영·CTA 활성; 대표 상품은 목적지·판매 상태 미확인 | 자동 접근 점검은 SmartStore의 HTTP 429로 완료하지 못함. 실제 브라우저에서 스토어 접속을 확인하고, 상품명·최종 URL·판매 상태를 검증한 뒤 대표 상품 CTA를 활성화 |
 | 운영·정책 정보 | 사업자·대표 연락처·개인정보처리방침·약관·권리자 없음 | 미확보 | 임의 연락처·정책·저작권 문구를 만들지 않음 |
-| 도메인·배포 | GitHub `https://github.com/TeusEE/mayone_web.git`의 `main`에 `55a7765`까지 push; Vercel `mayone-home` Production `https://mayone-home.vercel.app` (최신 배포 `dpl_CRwnAfVEbT6hm61ecqWrwhTV5C8p`); 롤백 Preview `https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app` | Production 배포·HTTP 200 확인. 별도 공식 도메인과 Vercel Git 자동 배포 연동은 미설정 | push 후 CLI로 수동 배포하고 있다. 공식 HTTPS 도메인과 canonical·공유 주소를 확정한 뒤 `NEXT_PUBLIC_SITE_URL`을 설정한다. Vercel Git 자동 연동은 별도 작업 |
+| 도메인·배포 | GitHub `https://github.com/TeusEE/mayone_web.git`의 `main`; Vercel `mayone-home` Production `https://mayone-home.vercel.app`; 롤백 Preview `https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app` | Production 수동 배포. 별도 공식 도메인과 Vercel Git 자동 배포 연동은 미설정 | push 후 CLI로 수동 배포한다. 공식 HTTPS 도메인과 canonical·공유 주소를 확정한 뒤 `NEXT_PUBLIC_SITE_URL`을 설정한다. Vercel Git 자동 연동은 별도 작업 |
 
-자료 담당 역할은 `fe-task.md` §8에 기록합니다. 운영팀 확인 전까지 앱 콘텐츠 데이터의 `sourceState`는 `pending`, 원고·후보 레코드는 `publicationState: draft`, `reviewState: pending`으로 둡니다. 공개 조회는 두 상태가 모두 확정된 레코드만 반환합니다.
+자료 담당 역할은 `fe-task.md` §8에 기록합니다. 확인되지 않은 운영자료가 남은 컬렉션은 `sourceState: pending`으로 유지하고, 미확인 원고·후보 레코드는 `publicationState: draft`, `reviewState: pending`으로 둡니다. 공개 조회는 `published`/`confirmed` 상태인 레코드만 반환합니다.
+
+사용자 요청에 따라 네이버 플레이스에서 확인한 아산탕정·미금·웨스턴돔·야당·운정·삼송·행당·메이원맨즈헤어 영등포구청점은 `published`/`confirmed` 상태로 목록에 반영했습니다. 제외 대상과 나머지 원고 후보는 계속 `draft`/`pending`이며 공개하지 않습니다. 주차는 각 플레이스 편의 항목을 기준으로 반영하고, 웨스턴돔점 외 지점의 상세 요금·이용 방법은 확인된 경우만 안내합니다.
 
 ## D단계 기존 검증 기록
 
