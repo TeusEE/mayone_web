@@ -11,17 +11,17 @@
 
 | 순서 | 메인 구역 | 원본 구성 | 현재 구현·공개 상태 |
 | --- | --- | --- | --- |
-| 1 | 히어로 `#top` | 브랜드 약속, 설명, 살롱·HARU·마켓 CTA | 카피 반영. 브랜드 원고는 `draft`; 개발 검수에만 노출 |
+| 1 | 히어로 `#top` | 브랜드 약속, 설명, 살롱·HARU·마켓 CTA | 메인 브랜드 원고는 사용자 승인으로 공개 상태 전환. 운영 데이터 후보는 계속 검수 대기 |
 | 2 | `ONE BRAND. ONE SYSTEM.` `#brand-story` | SALON → SYSTEM → EDUCATION → ACADEMY → BUSINESS | 원본 흐름으로 반영 |
 | 3 | MAY.ONE HAIR `#hair` | BEAUTY BEYOND STYLE, 소개 카피, 지점·채용 이동 | 카피와 CSS visual 반영. 실제 살롱 사진·운영 정보는 미확보 |
 | 4 | MAY.ONE SYSTEM `#system` | EDUCATION·CONSULTING·MARKETING·MANAGEMENT·GROWTH | 원본의 다섯 항목으로 반영 |
 | 5 | HARU `#haru` | Learn. Grow. Lead., 교육 소개·원칙 네 가지·분야 다섯 가지 | 소개 반영. 실제 개설 강의·신청 링크는 별도 공개 검증 |
-| 6 | MAY.ONE MARKET `#market` | 마켓 소개·스토어·대표 상품 CTA | 원본 URL 목적지 미검증. 공개 공통 링크가 없으면 CTA 비활성 |
+| 6 | MAY.ONE MARKET `#market` | 마켓 소개·스토어·대표 상품 CTA | 운영 담당자가 제공한 공식 SmartStore 주소를 반영해 스토어 CTA를 연결. 대표 상품 CTA는 목적지 확인 전 비활성 |
 | 7 | RECRUIT `#recruit` | 소개와 INTERN → DESIGNER → DIRECTOR → PARTNER | 카피 반영. 실제 공고와 입사 지원은 pending |
 | 8 | EVERYTHING IS CONNECTED. `#about` | HARU ACADEMY·MAY.ONE HAIR·MAY.ONE MARKET 3개 카드 | 원본 카드 3개 반영 |
 | 9 | 마지막 CTA `#next-step`와 푸터 | Learn. Grow. Lead. 및 SALON · EDUCATION · MARKET | 원본 CTA·푸터 카피 반영 |
 
-원본 HTML의 대표 사진이나 공식 로고는 포함되어 있지 않습니다. MAY.ONE HAIR와 MARKET의 대체 visual은 CSS 그래픽이며, 공개 브랜드 원고는 담당자의 승인 전까지 Production에 노출되지 않습니다.
+원본 HTML의 대표 사진이나 공식 로고는 포함되어 있지 않습니다. MAY.ONE HAIR와 MARKET의 대체 visual은 CSS 그래픽입니다. 메인 브랜드 원고는 사용자 지시에 따라 공개 승인되었으며, 공식 에셋과 운영 데이터는 별도 확인 전까지 미확보 상태입니다.
 
 ## 자료별 확보·공개 상태
 
@@ -35,9 +35,9 @@
 | 실제 교육 | 개설 강의·대상·강사·일정·장소·수강료 자료 없음 | 미확보, pending | 목록 상태는 `지점 정보를 준비 중`과 구분되는 교육 준비 안내. 신청 버튼 비활성 |
 | 채용 | 실제 공고·조건·마감·지원 URL 없음 | 미확보, pending | 상시 모집으로 가정하지 않음. 채용 목록은 준비 안내 |
 | 산학협력 기관·문의 | 소개자료에 정화예술대학교 표기 후보, 문의 채널 없음 | 검토 필요 | 협력 관계·담당 채널·사례·기관 로고 공개 승인 필요 |
-| 시장·대표 상품 링크 | `https://naver.me/GArimveD`, `https://naver.me/FM9zFgIA` | 원자료 URL, 목적지 미검증 | 최종 목적지·상품명·현재 판매 상태를 확인한 뒤 각각 활성화 |
+| 시장·대표 상품 링크 | 공식 스토어 `https://smartstore.naver.com/mayone-market` (담당자 제공); 대표 상품 후보 `https://naver.me/FM9zFgIA` | 스토어 주소 반영·CTA 활성; 대표 상품은 목적지·판매 상태 미확인 | 자동 접근 점검은 SmartStore의 HTTP 429로 완료하지 못함. 실제 브라우저에서 스토어 접속을 확인하고, 상품명·최종 URL·판매 상태를 검증한 뒤 대표 상품 CTA를 활성화 |
 | 운영·정책 정보 | 사업자·대표 연락처·개인정보처리방침·약관·권리자 없음 | 미확보 | 임의 연락처·정책·저작권 문구를 만들지 않음 |
-| 도메인·배포 | 공식 도메인·Git 원격·Vercel 프로젝트 미정 | 미확정 | Preview와 Production URL·canonical·공유 주소 확정 필요. `NEXT_PUBLIC_SITE_URL`은 공식 HTTPS origin을 받은 뒤 설정 |
+| 도메인·배포 | Vercel 프로젝트 `mayone-home`; Production `https://mayone-home.vercel.app` (배포 `dpl_Ffjr58VKjSw4zTVFEJQUCRZ2xo2U`); 롤백 Preview `https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app`; 로컬 Git `main` | Production 브랜드 카피 공개 완료, 공식 도메인·Git 원격 미확정 | 원격 저장소·브랜치 연결, 공식 HTTPS 도메인, canonical·공유 주소 확정이 필요하다. `NEXT_PUBLIC_SITE_URL`은 공식 origin 확정 후 설정 |
 
 자료 담당 역할은 `fe-task.md` §8에 기록합니다. 운영팀 확인 전까지 앱 콘텐츠 데이터의 `sourceState`는 `pending`, 원고·후보 레코드는 `publicationState: draft`, `reviewState: pending`으로 둡니다. 공개 조회는 두 상태가 모두 확정된 레코드만 반환합니다.
 

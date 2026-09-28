@@ -1,16 +1,17 @@
 import type { CommonLink, ContentCollection } from "@/types/content";
 
-// 원자료에 URL이 있으나 최종 목적지와 공개 가능 여부가 확인되지 않았습니다.
+// 공식 스토어 주소는 운영 담당자가 제공했습니다. 대표 상품·소셜 링크는 별도 확인 전까지 공개하지 않습니다.
 export const commonLinks: ContentCollection<CommonLink> = {
   sourceState: "pending",
   records: [
     {
-      id: "market-store-candidate",
-      publicationState: "draft",
-      reviewState: "pending",
+      id: "market-store-official",
+      publicationState: "published",
+      reviewState: "confirmed",
+      confirmedAt: "2026-09-28T20:00:00+09:00",
       purpose: "market",
-      label: "메이원마켓 바로가기",
-      url: "https://naver.me/GArimveD",
+      label: "메이원마켓 공식 스마트스토어",
+      url: "https://smartstore.naver.com/mayone-market",
     },
     {
       id: "market-product-candidate",

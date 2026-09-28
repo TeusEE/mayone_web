@@ -1,13 +1,14 @@
 import type { BrandContent, ContentCollection } from "@/types/content";
 
-// 원본 홈페이지의 브랜드 원고를 반영한 초안입니다. 최종 확인 전에는 운영 페이지에 공개하지 않습니다.
+// 메인 브랜드 소개 문구는 사용자 지시에 따라 Production 공개 승인 상태로 관리합니다.
 export const brandCopy: ContentCollection<BrandContent> = {
-  sourceState: "pending",
+  sourceState: "confirmed",
   records: [
     {
       id: "mayone-brand-copy",
-      publicationState: "draft",
-      reviewState: "pending",
+      publicationState: "published",
+      reviewState: "confirmed",
+      confirmedAt: "2026-09-28T20:11:13+09:00",
       name: "MAY.ONE",
       promise: "사람을 아름답게, 사람을 성장하게.",
       heroEyebrow: "SALON · EDUCATION · MARKET",

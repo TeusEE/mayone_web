@@ -170,9 +170,11 @@ export function HomeLanding() {
               <MarketAction dark link={featuredProductLink} label="대표 상품 보기" />
             </div>
             <p className={styles.smallNote} role="status">
-              {marketLink?.url && featuredProductLink?.url && isValidExternalUrl(marketLink.url) && isValidExternalUrl(featuredProductLink.url)
-                ? "공식 네이버 스마트스토어로 연결됩니다. 새 탭에서 열립니다."
-                : "확인된 공식 링크만 활성화됩니다."}
+              {marketLink?.url && isValidExternalUrl(marketLink.url)
+                ? featuredProductLink?.url && isValidExternalUrl(featuredProductLink.url)
+                  ? "공식 네이버 스마트스토어와 대표 상품으로 연결됩니다. 새 탭에서 열립니다."
+                  : "공식 네이버 스마트스토어로 연결됩니다. 대표 상품 링크는 확인 후 활성화합니다. 새 탭에서 열립니다."
+                : "공식 스토어 링크를 확인한 뒤 활성화합니다."}
             </p>
           </div>
           <div className={styles.marketVisual} aria-hidden="true">
