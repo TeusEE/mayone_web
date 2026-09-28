@@ -272,6 +272,12 @@
   }
 }
 
+@media (max-width: 35rem) {
+  .sectionTitle {
+    font-size: var(--font-size-section-title-mobile);
+  }
+}
+
 @media (max-width: 30rem) {
   .filters {
     padding: var(--space-4);

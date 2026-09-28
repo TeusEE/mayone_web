@@ -451,6 +451,10 @@
 }
 
 @media (max-width: 35rem) {
+  .sectionTitle {
+    font-size: var(--font-size-section-title-mobile);
+  }
+
   .flow {
     gap: 0.625rem;
   }
