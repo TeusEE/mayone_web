@@ -28,6 +28,10 @@
   margin-inline: auto;
 }
 
+.inner {
+  width: min(calc(100% - 2 * var(--page-gutter)), var(--content-wide));
+}
+
 .heroInner {
   max-width: 58rem;
 }
