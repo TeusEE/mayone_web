@@ -1,0 +1,5 @@
+id,title,category,instructor_label,summary,audience,starts_at,ends_at,time_zone,location,tuition_krw,materials,recruitment_status,application_deadline,is_mock
+demo-cut-basics,"테스트 과정 · 베이직 커트 실습",CUT,가상 강사 (테스트),테스트용 커리큘럼과 신청 흐름을 확인하는 예시입니다.,테스트용 대상자,2026-10-17T10:00:00+09:00,2026-10-17T13:00:00+09:00,Asia/Seoul,테스트 교육장 (가상),120000,테스트용 도구,open,2026-10-10T23:59:00+09:00,true
+demo-color-intro,"테스트 과정 · 컬러 기초",COLOR,가상 강사 (테스트),모집 예정 상태를 확인하기 위한 테스트 예시입니다.,테스트용 대상자,2026-11-07T10:00:00+09:00,2026-11-07T13:00:00+09:00,Asia/Seoul,테스트 교육장 (가상),90000,테스트용 도구,upcoming,2026-10-31T23:59:00+09:00,true
+demo-consulting-closed,"테스트 과정 · 디자인 상담",CONSULTING,가상 강사 (테스트),마감 상태를 확인하기 위한 테스트 예시입니다.,테스트용 대상자,2026-10-03T10:00:00+09:00,2026-10-03T12:00:00+09:00,Asia/Seoul,테스트 교육장 (가상),0,준비물 없음,closed,2026-09-20T23:59:00+09:00,true
+demo-salon-work-ended,"테스트 과정 · 살롱 실무",SALON_WORK,가상 강사 (테스트),종료 상태를 확인하기 위한 테스트 예시입니다.,테스트용 대상자,2026-08-01T10:00:00+09:00,2026-08-01T13:00:00+09:00,Asia/Seoul,테스트 교육장 (가상),0,준비물 없음,completed,2026-07-25T23:59:00+09:00,true

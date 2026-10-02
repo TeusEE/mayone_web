@@ -3,6 +3,7 @@
 /.next/
 /out/
 /build/
+/.local-data/
 
 # local environment files
 .env*

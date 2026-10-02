@@ -1,0 +1,6 @@
+.page {
+  width: min(calc(100% - 2 * var(--page-gutter)), var(--content-wide));
+  min-height: min(70vh, 48rem);
+  margin-inline: auto;
+  padding-block: clamp(3rem, 7vw, 6rem) clamp(5rem, 11vw, 9rem);
+}

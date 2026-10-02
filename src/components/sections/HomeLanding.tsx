@@ -1,7 +1,7 @@
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { getBrandCopyForDevelopmentReview, getPublicClasses, getPublicCommonLinks, getPublicJobs } from "@/content/queries";
-import { getClassApplicationAvailability, getJobApplicationAvailability, isValidExternalUrl } from "@/lib/actions";
+import { getBrandCopyForDevelopmentReview, getPublicCommonLinks, getPublicJobs } from "@/content/queries";
+import { getJobApplicationAvailability, isValidExternalUrl } from "@/lib/actions";
 import type { CommonLink } from "@/types/content";
 import styles from "./HomeLanding.module.css";
 
@@ -15,7 +15,7 @@ function MarketAction({ link, label, dark = false }: { link: CommonLink | undefi
   return <Button className={className} disabled variant="secondary">{label}</Button>;
 }
 
-export function HomeLanding() {
+export async function HomeLanding() {
   const brand = getBrandCopyForDevelopmentReview();
 
   if (!brand) {
@@ -33,12 +33,8 @@ export function HomeLanding() {
   }
 
   const isDraftPreview = brand.publicationState !== "published" || brand.reviewState !== "confirmed";
-  const publicClasses = getPublicClasses();
   const publicJobs = getPublicJobs();
   const now = new Date();
-  const classApplication = publicClasses
-    .map((item) => getClassApplicationAvailability(item, now))
-    .find((availability) => availability.enabled && availability.href);
   const jobApplication = publicJobs
     .map((item) => getJobApplicationAvailability(item, now))
     .find((availability) => availability.enabled && availability.href);
@@ -147,14 +143,9 @@ export function HomeLanding() {
           </ol>
 
           <div className={styles.buttonRowLeft}>
-            <ButtonLink href="/haru/classes">교육 일정 보기</ButtonLink>
-            {classApplication?.href ? (
-              <ButtonLink href={classApplication.href} external variant="secondary">수강 신청</ButtonLink>
-            ) : (
-              <Button disabled variant="secondary">수강 신청</Button>
-            )}
+            <ButtonLink href="/haru/classes">교육 과정·일정 보기</ButtonLink>
           </div>
-          {!classApplication?.href ? <p className={styles.smallNote}>현재 공개된 모집 강의가 없어 신청을 안내할 수 없습니다.</p> : null}
+          <p className={styles.smallNote}>과정과 모집 일정을 확인한 뒤, 원하는 과정에서 신청을 시작할 수 있습니다.</p>
         </div>
       </section>
 
