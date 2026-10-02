@@ -1,22 +1,24 @@
 import { BranchDirectory } from "@/components/salon/BranchDirectory";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
-import { getBranchCollectionState, getPublicBranches } from "@/content/queries";
+import { getSalonDirectoryData } from "@/content/local-branches";
 import { createPageMetadata } from "@/lib/seo";
 import styles from "@/app/content-pages.module.css";
 
-export function generateMetadata() {
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const { branches } = await getSalonDirectoryData();
   return createPageMetadata({
     title: "메이원헤어 지점",
     description: "메이원헤어 지점의 주소, 운영시간, 주차, 매장 정보와 네이버 예약 링크를 확인할 수 있습니다.",
     path: "/salon",
-    contentAvailable: getPublicBranches().length > 0,
+    contentAvailable: branches.length > 0,
   });
 }
 
-export default function SalonDirectoryPage() {
-  const branches = getPublicBranches();
-  const collectionState = getBranchCollectionState();
+export default async function SalonDirectoryPage() {
+  const { branches, collectionState } = await getSalonDirectoryData();
 
   return (
     <div className={styles.page}>

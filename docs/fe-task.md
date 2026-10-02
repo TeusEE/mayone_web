@@ -7,7 +7,7 @@
 - 구현 가이드: [frontend-style-guide.md](./frontend-style-guide.md) · 보관 참고: [visualsalon-reference.md](./visualsalon-reference.md)
 - 운영자료 후보: [webpage_contents.md](../origin_source/webpage_contents.md)
 
-현재 상태: A~C의 화면·목록 기능을 구현했고, 네이버 플레이스에서 확인한 8개 지점의 방문 정보와 예약 링크를 `/salon`에 공개했다. 지점 상세 화면은 정보 수집 전까지 임시 비활성화한다. D의 기본 검증과 핵심 앵커 QA, E의 GitHub push·Vercel Production 수동 배포를 완료했다. FE-T25~FE-T37 CSV mock 신청, 로컬 개발용 관리자 홈, 과정별 신청 요약·상세 및 신청자 수정·삭제, 분야별 제목·인원 시각적 그룹과 그룹 내 시작일순 과정 표시, 수강 과목 추가·수정·삭제, 과정 모달·단계형 동선을 구현·검증했다. Preview 저장과 Production 신청·관리자 조회·변경은 비활성 상태를 유지한다. 실제 접수 저장·인증·Supabase 연동은 별도 후속 범위다. 공식 도메인·Vercel 자동 Git 배포·나머지 지점 자료·전체 반응형/접근성 QA는 남아 있다.
+현재 상태: A~C의 화면·목록 기능을 구현했고, 네이버 플레이스에서 확인한 8개 지점의 방문 정보와 예약 링크를 `/salon`에 공개했다. 지점 상세 화면은 정보 수집 전까지 임시 비활성화한다. D의 기본 검증과 핵심 앵커 QA, E의 GitHub push·Vercel Production 수동 배포를 완료했다. FE-T25~FE-T38 CSV mock 신청, 로컬 개발용 관리자 홈, 신청자·수강 과목·지점 관리, 과정별 신청 요약·상세, 분야별 제목·인원 시각적 과정 그룹과 그룹 내 시작일순 표시, 과정 모달·단계형 동선을 구현·검증했다. FE-T39의 테스트 DB 저장 코드·migration·RLS, 로컬 데이터 가져오기·CRUD 검증을 완료하고 `.env.local`을 테스트 target으로 지정했다. Preview도 테스트 DB를 사용하며 Vercel Production에는 별도 운영 DB 환경변수·migration·운영 데이터가 필요하다. Preview 저장과 Production 신청·관리자 조회·변경은 비활성 상태를 유지한다. 공식 도메인·Vercel 자동 Git 배포·나머지 지점 자료·전체 반응형/접근성 QA는 남아 있다.
 
 ## 1. 작업 관리 원칙
 
@@ -26,7 +26,7 @@
 | C. 목록·상세 | FE-T11~FE-T17 | 지점·교육·산학협력·채용·브랜드 정보 페이지 | 구현 완료; 실제 운영 자료 공개는 대기 |
 | D. 품질 검증 | FE-T18~FE-T21 | 공개 이미지·SEO, 상태 테스트, 반응형·접근성·빌드 검증 | lint·타입·콘텐츠 테스트·build와 핵심 반복 앵커 QA 통과; 전체 화면·접근성·Lighthouse QA 대기 |
 | E. 배포·운영 | FE-T22~FE-T24 | Preview 검수, 콘텐츠 공개 점검, Production 배포·운영 인계 | GitHub push 및 Production 배포 완료; 공식 도메인·자동 배포·운영 인계 대기 |
-| F. 수강 신청 시연 | FE-T25~FE-T37 | CSV mock 과정, 단계형 신청, 개발 전용 CSV 저장·관리자 홈·과정별 신청 요약/상세·과목 CRUD·분야별 제목·인원 그룹 및 그룹 내 시작일 정렬, 환경별 제한, 과정 상세 모달 | 구현·Playwright 분야별 시각 그룹과 과정 정렬 검증 완료; 실제 접수·운영 관리자는 별도 범위 |
+| F. 수강 신청·로컬 관리자 시연 | FE-T25~FE-T38 | CSV mock 과정, 단계형 신청, 개발 전용 저장, 관리자 홈·신청자/과목/지점 관리, 분야별 과정 그룹, 환경별 제한 | 구현·Playwright CRUD/공개 목록 반영 및 자동 테스트·프로덕션 빌드 검증 완료; 실제 접수·운영 관리자는 별도 범위 |
 
 FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립적으로 진행할 수 있다. 토큰·공통 컴포넌트를 완성한 뒤 메인을 먼저 만들고, 동일한 콘텐츠 조회 계층으로 목록·상세를 확장한다.
 
@@ -339,7 +339,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 | ID | 예정 사항 | 현재 처리 |
 | --- | --- | --- |
 | FUTURE-01 | 카카오·네이버 회원가입·로그인 | 공급자 지원 방식·제품 요구사항 확정 후 별도 PRD/작업으로 전환 |
-| FUTURE-02 | Supabase 도입 | CSV mock 시연 후 실제 신청 저장소로 전환 예정; 프로젝트·SDK·DB·Auth·Storage·키·정책 설정은 승인된 후속 작업까지 보류 |
+| FUTURE-02 | Supabase Auth·Storage·회원 모델 | 테스트 DB 연결과 환경 분리 구조는 FE-T39에서 구현했다. 운영 DB 연결은 별도 프로젝트 설정이 필요하며, 로그인·회원 데이터·Storage는 별도 요구사항과 접근 정책을 확정한 뒤 검토 |
 | FUTURE-03 | 세션·마이페이지·회원 전용 권한·신청 이력 | 인증과 실제 회원 기능 범위가 확정된 뒤 설계 |
 | FUTURE-04 | 실제 교육 신청 저장·입사지원·산학협력 접수 | CSV mock 시연과 별개로, Supabase 등 저장·전달·개인정보 처리·접수 절차를 확정한 뒤 구현 |
 | FUTURE-05 | CMS·실시간 모집·지도·분석·후기 확장 | 운영 필요와 데이터 확보 이후 별도 범위로 검토 |
@@ -474,3 +474,29 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] 자동 테스트에서 입력 순서가 섞여도 분야별 묶음과 분야 안의 날짜 순서가 유지되는지 검증한다.
 - [x] Playwright로 공개 과정 목록과 관리자 과정 목록의 분야·날짜 정렬을 확인한다.
 - 완료 기준: 과정 데이터 입력·수정·CSV 행 순서에 관계없이 두 화면에 같은 분야별 그룹과 그룹 안의 시작일순 과정이 표시된다.
+
+### FE-T38. 로컬 관리자 지점 목록 관리
+
+- 우선순위: P1 / 요구사항: FE-03, NFR-01·NFR-02·NFR-03 / 의존성: FE-T02, FE-T03, FE-T22
+- [x] `/admin/branches`에 지점 목록과 지점 추가·수정·삭제 화면을 만들고, 공개/초안 및 운영 상태를 관리한다.
+- [x] 기존 `src/content/branches.ts` 자료로 시작하고 로컬 변경은 Git에 포함하지 않는 `.local-data/branches.json`에 저장한다. 지점 ID는 생성 후 변경할 수 없게 한다.
+- [x] 지점명·지역·주소·운영 여부, 운영시간·휴무·전화·찾아오는 길·주차·매장정보, 예약 URL과 내부 참고용 플레이스 URL을 편집한다. 공개 상태는 지역·주소·확인된 운영 상태와 함께 서버에서 검증한다.
+- [x] 개발 환경의 `/salon`은 공개·검토 완료된 로컬 지점 사본을 사용한다. Production과 Preview에는 관리자 변경을 노출하지 않고 체크인된 원본 지점 자료를 유지한다.
+- [x] 관리자 페이지와 변경 API를 개발 모드·loopback Host·같은 출처 요청으로 제한하고, 잘못된 JSON을 발견하면 기존 파일을 덮어쓰지 않는다.
+- [x] 자동 테스트에서 입력·URL·공개 필수값 검증, 원본 fallback, JSON 추가·수정·삭제, 동시 저장 및 손상된 파일 보존을 확인하고 Playwright에서 관리자 메뉴와 공개 지점 목록 반영을 검증한다.
+- 완료 기준: 로컬 관리자가 지점 정보를 안전하게 추가·수정·삭제하고 공개 상태를 바꾸면 개발 지점 페이지에 반영되며, Preview·Production과 원격 Host는 지점 정보를 변경하거나 로컬 사본을 제공하지 않는다.
+
+### FE-T39. Supabase 관리 데이터 저장소 전환
+
+- 우선순위: P1 / 요구사항: FE-03, FE-04, NFR-04 / 의존성: FE-T31~FE-T38
+- [x] `mayone_branches`, `mayone_class_offers`, `mayone_enrollments` 테이블용 SQL migration을 추가하고, 세 테이블에 RLS를 활성화한다. `public`, `anon`, `authenticated` 권한을 회수하고 server role만 CRUD 권한을 갖게 한다.
+- [x] `@supabase/supabase-js`를 server-only 저장 어댑터에서 사용한다. Secret key를 클라이언트 컴포넌트·브라우저 응답에 전달하지 않는다.
+- [x] 지점·과정 CRUD와 신청 제출·조회·수정·삭제를 Supabase로 연결한다. 신청 저장은 기존 mock/Preview 허용 범위에 남기고 실제 접수라고 표시하지 않는다.
+- [x] 기존 지점 JSON, 과정 fixture/CSV, 테스트 신청 CSV를 ID 기준 upsert로 가져오는 `npm run supabase:import-local` 스크립트를 추가한다. 가져온 뒤에도 로컬 원본은 백업용으로 유지한다.
+- [x] Supabase REST 응답을 기존 콘텐츠 규칙으로 재검증하고, 가짜 REST 응답을 이용해 서버 저장 어댑터의 추가·조회·수정·삭제 흐름을 자동 테스트한다.
+- [x] `https://vmhydtjwvfyedxfloqhn.supabase.co` 프로젝트에 migration을 적용하고, 세 테이블의 RLS 활성화와 `anon`·`authenticated` SELECT 권한 차단을 확인한다.
+- [x] `.env.local`에 project URL/Secret key를 설정하고 기존 데이터 가져오기를 실행한다. 배포 환경에서 쓸 때는 Vercel server environment에도 비밀값을 별도로 설정한다.
+- [x] 체크인·로컬 변경 데이터를 가져온 뒤 실제 Supabase에서 지점·과정·신청 데이터를 조회하고 각 테이블의 추가·수정·삭제를 확인한다. 가져온 8건의 테스트 신청은 모두 테스트 데이터 확인 상태이며 로컬 원본도 유지한다.
+- [x] `.env.local`과 Vercel Preview는 `SUPABASE_DATA_TARGET=test`, Vercel Production은 `production` target만 허용한다. 런타임에서 target과 Vercel environment가 맞지 않으면 연결을 거부하고, 로컬 데이터 import는 test target에서만 실행한다.
+- [ ] 별도 운영 Supabase 프로젝트의 URL·Secret key를 Vercel Production 환경변수에 설정하고 target을 `production`으로 지정한다. 운영 프로젝트에 migration을 적용하고 공개할 지점·과정 자료만 준비해 테스트 신청 데이터가 없는지 검증한다.
+- 완료 기준: 비운영 앱 환경에서 지점·과정·테스트 신청 데이터가 Supabase와 일치하고, 비밀 key는 서버 밖으로 노출되지 않는다. 실제 DB migration/import와 UI 검증이 끝나기 전에는 이 task를 완료 처리하지 않는다.

@@ -1,0 +1,75 @@
+.manager { display: grid; gap: var(--space-4); }
+.catalogHeading { display: flex; justify-content: space-between; align-items: end; gap: var(--space-4); padding-block-end: var(--space-4); border-bottom: 1px solid var(--color-border); }
+.eyebrow { margin: 0; color: var(--color-accent-text); font-size: 0.7rem; font-weight: 750; letter-spacing: 0.12em; text-transform: uppercase; }
+.catalogHeading h2 { margin: var(--space-2) 0 0; color: var(--color-text); font-size: clamp(1.4rem, 3vw, 2rem); letter-spacing: -0.035em; }
+.catalogHeading h2 span { margin-inline-start: var(--space-2); color: var(--color-text-secondary); font-size: 0.8em; font-weight: 600; }
+.helpText { max-width: 58rem; margin: 0; color: var(--color-text-secondary); font-size: 0.875rem; line-height: 1.7; overflow-wrap: anywhere; }
+.helpText a { color: var(--color-text); font-weight: 700; text-underline-offset: 0.2em; }
+.helpText code { font-size: 0.85em; }
+.primaryButton,
+.secondaryButton,
+.dangerButton { display: inline-flex; min-height: 2.75rem; padding: 0.65rem 1rem; align-items: center; justify-content: center; gap: var(--space-2); border: 1px solid var(--color-border); border-radius: 0; font: inherit; font-size: 0.825rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+.primaryButton { border-color: var(--color-text); background: var(--color-text); color: var(--color-surface); }
+.secondaryButton { background: var(--color-surface); color: var(--color-text); }
+.dangerButton { border-color: var(--color-danger); background: var(--color-surface); color: var(--color-danger); }
+.primaryButton:hover:not(:disabled) { opacity: 0.85; }
+.secondaryButton:hover:not(:disabled) { background: var(--color-surface-soft); }
+.dangerButton:hover:not(:disabled) { background: color-mix(in srgb, var(--color-danger) 7%, var(--color-surface)); }
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.dangerButton:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.primaryButton:disabled,
+.secondaryButton:disabled,
+.dangerButton:disabled { cursor: wait; opacity: 0.55; }
+.errorMessage,
+.successMessage { margin: 0; padding: var(--space-3) var(--space-4); white-space: pre-line; font-size: 0.85rem; line-height: 1.6; }
+.errorMessage { border: 1px solid var(--color-danger); color: var(--color-danger); }
+.successMessage { border: 1px solid var(--color-border); color: var(--color-accent-text); }
+.editor { display: grid; gap: var(--space-4); padding: clamp(1rem, 3vw, 1.75rem); border: 1px solid var(--color-border); background: var(--color-surface-soft); }
+.editorHeading { display: flex; justify-content: space-between; align-items: end; gap: var(--space-4); }
+.editorHeading h3 { margin: var(--space-2) 0 0; color: var(--color-text); font-size: 1.35rem; }
+.editorHeading > p { margin: 0; color: var(--color-text-secondary); font-size: 0.8rem; line-height: 1.6; }
+.formGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.field { display: grid; align-content: start; gap: 0.4rem; min-width: 0; }
+.field label { color: var(--color-text); font-size: 0.8rem; font-weight: 700; }
+.field label span { color: var(--color-text-secondary); font-weight: 500; }
+.field input,
+.field select,
+.field textarea { width: 100%; min-height: 2.9rem; padding: 0.7rem 0.8rem; border: 1px solid var(--color-border); border-radius: 0; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 0.9rem; }
+.field textarea { min-height: 6rem; resize: vertical; line-height: 1.6; }
+.field input:focus-visible,
+.field select:focus-visible,
+.field textarea:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.wideField { grid-column: 1 / -1; }
+.localNote { margin: 0; color: var(--color-text-secondary); font-size: 0.8rem; line-height: 1.6; }
+.actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.branchList { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.branchCard { display: grid; gap: var(--space-4); padding: clamp(1rem, 2.5vw, 1.5rem); border: 1px solid var(--color-border); background: var(--color-surface); }
+.branchHeader { display: flex; justify-content: space-between; align-items: start; gap: var(--space-4); }
+.branchId { margin: 0; color: var(--color-accent-text); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; overflow-wrap: anywhere; }
+.branchHeader h3 { margin: var(--space-2) 0; color: var(--color-text); font-size: clamp(1.1rem, 2.6vw, 1.4rem); line-height: 1.4; }
+.publishedStatus,
+.draftStatus { display: inline-flex; margin: 0; padding: 0.3rem 0.55rem; border: 1px solid var(--color-border); font-size: 0.72rem; font-weight: 750; }
+.publishedStatus { border-color: #68804b; color: #435a2b; }
+.draftStatus { color: var(--color-text-secondary); }
+.branchDetails { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-3) var(--space-5); margin: 0; }
+.branchDetails > div { min-width: 0; }
+.branchDetails dt { margin-block-end: 0.25rem; color: var(--color-text-secondary); font-size: 0.7rem; }
+.branchDetails dd { margin: 0; color: var(--color-text); font-size: 0.85rem; line-height: 1.6; overflow-wrap: anywhere; }
+.deleteConfirmation { padding: var(--space-4); border: 1px solid var(--color-danger); background: var(--color-surface-soft); }
+.deleteConfirmation p { margin: 0 0 var(--space-3); color: var(--color-text); font-size: 0.85rem; line-height: 1.6; }
+.emptyState { padding: clamp(2rem, 6vw, 4rem); border: 1px solid var(--color-border); background: var(--color-surface-soft); text-align: center; }
+.emptyState h3 { margin: 0 0 var(--space-2); color: var(--color-text); font-size: 1.25rem; }
+.emptyState p { margin: 0; color: var(--color-text-secondary); line-height: 1.7; }
+
+@media (max-width: 42rem) {
+  .catalogHeading { align-items: start; flex-direction: column; }
+  .editorHeading { align-items: start; flex-direction: column; }
+  .formGrid { grid-template-columns: 1fr; gap: var(--space-3); }
+  .wideField { grid-column: auto; }
+  .branchHeader { flex-direction: column; gap: var(--space-3); }
+  .branchHeader > .actions { width: 100%; }
+  .branchHeader > .actions > button { flex: 1 1 auto; }
+  .branchDetails { grid-template-columns: 1fr; gap: var(--space-3); }
+  .editor > .actions > button { flex: 1 1 auto; }
+}

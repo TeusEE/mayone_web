@@ -3,17 +3,19 @@ import Link from "next/link";
 import { MockClassOfferManager } from "@/components/admin/MockClassOfferManager";
 import { getMockClassOffers } from "@/content/mock-class-offers";
 import type { MockClassOffer } from "@/lib/mock-class-offers";
+import { isSupabaseStorageConfigured } from "@/lib/supabase-storage";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "수강 과목 관리",
-  description: "로컬 신청 시연에 사용하는 mock 수강 과목을 관리합니다.",
+  description: "수강 신청 시연에 사용하는 과정 정보를 관리합니다.",
   robots: { index: false, follow: false },
 };
 
 export default async function AdminClassesPage() {
+  const usingSupabase = isSupabaseStorageConfigured();
   let offers: MockClassOffer[] = [];
   let catalogErrors: string[] = [];
   let readFailed = false;
@@ -35,12 +37,12 @@ export default async function AdminClassesPage() {
       </header>
 
       <aside className={styles.notice}>
-        <strong>로컬 전용 mock 과목</strong>
-        <p><code>.local-data/mock-class-offers.csv</code>에 저장됩니다. 개발 서버에만 반영되며 실제 교육 개설이나 접수로 연결되지 않습니다.</p>
+        <strong>{usingSupabase ? "Supabase 테스트 과목" : "로컬 전용 mock 과목"}</strong>
+        <p>{usingSupabase ? "과목은 Supabase에 저장되어 교육 일정과 신청 화면에 반영됩니다. 실제 교육 개설이나 접수로 연결되지는 않습니다." : <><code>.local-data/mock-class-offers.csv</code>에 저장됩니다. 개발 서버에만 반영되며 실제 교육 개설이나 접수로 연결되지 않습니다.</>}</p>
       </aside>
 
       {readFailed ? (
-        <p className={styles.error} role="alert">과목 CSV를 읽지 못했습니다. 저장 파일과 fixture 경로를 확인해 주세요.</p>
+          <p className={styles.error} role="alert">과목 데이터를 읽지 못했습니다. Supabase 환경변수·테이블 또는 로컬 파일을 확인해 주세요.</p>
       ) : catalogErrors.length > 0 ? (
         <div className={styles.error} role="alert">
           <strong>과목 CSV를 확인해 주세요.</strong>

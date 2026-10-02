@@ -27,7 +27,7 @@
 .sectionHeading { margin-block-end: var(--space-5); }
 .sectionHeading h2 { margin: var(--space-2) 0 0; color: var(--color-text); font-size: clamp(1.45rem, 3vw, 2rem); letter-spacing: -0.035em; }
 
-.menuGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-4); }
+.menuGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr)); gap: var(--space-4); }
 .menuCard {
   position: relative;
   display: grid;

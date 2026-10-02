@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { join } from "node:path";
 import { getMockClassOffers } from "@/content/mock-class-offers";
-import { readMockEnrollmentCsv } from "@/lib/mock-enrollment-csv";
+import { getLocalBranchCatalog } from "@/content/local-branches";
+import { getMockEnrollmentRecords } from "@/content/mock-enrollments";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export default async function AdminDashboardPage() {
   let applicantCount = 0;
   let applicantReadFailed = false;
   try {
-    const records = await readMockEnrollmentCsv(join(process.cwd(), ".local-data", "mock-enrollments.csv"));
+    const records = await getMockEnrollmentRecords();
     applicantCount = records.length;
   } catch {
     applicantReadFailed = true;
@@ -33,17 +33,28 @@ export default async function AdminDashboardPage() {
     classCatalogReadFailed = true;
   }
 
+  let publicBranchCount = 0;
+  let draftBranchCount = 0;
+  let branchCatalogReadFailed = false;
+  try {
+    const branchRecords = await getLocalBranchCatalog();
+    publicBranchCount = branchRecords.filter((branch) => branch.publicationState === "published" && branch.reviewState === "confirmed").length;
+    draftBranchCount = branchRecords.length - publicBranchCount;
+  } catch {
+    branchCatalogReadFailed = true;
+  }
+
   return (
     <div className={styles.page}>
       <header className={styles.heading}>
         <p className={styles.eyebrow}>MAY.ONE · ADMINISTRATION</p>
         <h1>관리자 홈</h1>
-        <p>수강 신청 시연에 필요한 신청자와 과목을 관리합니다. 이 화면은 로컬 개발 테스트 전용입니다.</p>
+        <p>수강 신청 시연과 지점 목록에 필요한 정보를 관리합니다. 관리자 화면은 로컬 개발 테스트 전용입니다.</p>
       </header>
 
       <aside className={styles.notice}>
         <strong>로컬 테스트 관리자</strong>
-        <p>데이터는 이 개발 서버의 `.local-data`에 저장됩니다. 실제 수강 신청 접수나 운영 관리자 기능이 아닙니다.</p>
+        <p>Supabase 환경변수를 설정하면 지점·과목·테스트 신청 기록을 Supabase에서 관리합니다. 설정 전에는 로컬 개발 파일을 사용합니다. 실제 수강 신청 접수나 운영 관리자 기능이 아닙니다.</p>
       </aside>
 
       <section aria-labelledby="admin-menu-title">
@@ -64,6 +75,13 @@ export default async function AdminDashboardPage() {
             <strong>수강 과목 관리</strong>
             <span>신청 시연에 사용할 과목을 추가하고 일정과 모집 상태를 관리합니다.</span>
             <span className={styles.count}>{classCatalogReadFailed ? "파일 확인 필요" : `${classCount}개 과목`}</span>
+            <span className={styles.arrow} aria-hidden="true">→</span>
+          </Link>
+          <Link className={styles.menuCard} href="/admin/branches">
+            <span className={styles.menuIndex}>03 · BRANCH DIRECTORY</span>
+            <strong>지점 관리</strong>
+            <span>지점 정보를 수정하고 공개 상태와 운영 정보를 관리합니다.</span>
+            <span className={styles.count}>{branchCatalogReadFailed ? "파일 확인 필요" : `${publicBranchCount}곳 공개 · ${draftBranchCount}곳 초안`}</span>
             <span className={styles.arrow} aria-hidden="true">→</span>
           </Link>
         </div>

@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { checkLocalAdminMutationRequest } from "@/lib/local-admin-mutation";
 import { parseAdminMockClassOfferInput } from "@/lib/admin-mock-class-offer-input";
 import { deleteMockClassOffer, updateMockClassOffer } from "@/lib/mock-class-offer-store";
+import { deleteSupabaseClassOffer, getSupabaseClassOffers, hasSupabaseStorageConfiguration, isSupabaseStorageConfigured, updateSupabaseClassOffer } from "@/lib/supabase-storage";
 
 export const runtime = "nodejs";
 
@@ -58,7 +59,13 @@ export async function PUT(
   }
 
   try {
-    const updated = await updateMockClassOffer(localCatalogPath, fixtureCatalogPath, classId, parsedOffer.offer);
+    const useSupabase = hasSupabaseStorageConfiguration();
+    if (useSupabase && !isSupabaseStorageConfigured()) return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
+    const updated = useSupabase
+      ? (await getSupabaseClassOffers()).some((offer) => offer.id === classId)
+        ? await updateSupabaseClassOffer(classId, parsedOffer.offer)
+        : false
+      : await updateMockClassOffer(localCatalogPath, fixtureCatalogPath, classId, parsedOffer.offer);
     return updated
       ? jsonResponse({ ok: true }, 200)
       : jsonResponse({ message: "수강 과목을 찾을 수 없습니다." }, 404);
@@ -78,7 +85,11 @@ export async function DELETE(
   if (!classIdPattern.test(classId)) return jsonResponse({ message: "수강 과목을 찾을 수 없습니다." }, 404);
 
   try {
-    const deleted = await deleteMockClassOffer(localCatalogPath, fixtureCatalogPath, classId);
+    const useSupabase = hasSupabaseStorageConfiguration();
+    if (useSupabase && !isSupabaseStorageConfigured()) return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
+    const deleted = useSupabase
+      ? await deleteSupabaseClassOffer(classId)
+      : await deleteMockClassOffer(localCatalogPath, fixtureCatalogPath, classId);
     return deleted
       ? jsonResponse({ ok: true }, 200)
       : jsonResponse({ message: "수강 과목을 찾을 수 없습니다." }, 404);

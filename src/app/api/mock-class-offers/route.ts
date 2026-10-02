@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { checkLocalAdminMutationRequest } from "@/lib/local-admin-mutation";
 import { parseAdminMockClassOfferInput } from "@/lib/admin-mock-class-offer-input";
 import { createMockClassOffer } from "@/lib/mock-class-offer-store";
+import { createSupabaseClassOffer, hasSupabaseStorageConfiguration, isSupabaseStorageConfigured } from "@/lib/supabase-storage";
 
 export const runtime = "nodejs";
 
@@ -49,6 +50,14 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   try {
+    if (hasSupabaseStorageConfiguration()) {
+      if (!isSupabaseStorageConfigured()) return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
+      const created = await createSupabaseClassOffer(parsedOffer.offer);
+      return created
+        ? jsonResponse({ ok: true, classId }, 201)
+        : jsonResponse({ message: "같은 ID의 수강 과목이 이미 있습니다." }, 409);
+    }
+
     const created = await createMockClassOffer(localCatalogPath, fixtureCatalogPath, parsedOffer.offer);
     return created
       ? jsonResponse({ ok: true, classId }, 201)

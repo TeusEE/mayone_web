@@ -14,7 +14,7 @@ interface EnrollmentApplicationFormProps {
   initialClassId?: string;
   requestedClassId?: string;
   queryWasRepeated: boolean;
-  csvStorageAvailable: boolean;
+  storageTarget: "supabase" | "local" | "unavailable";
 }
 
 const categoryLabels: Record<MockClassOffer["category"], string> = {
@@ -33,7 +33,7 @@ const statusLabels: Record<MockClassOffer["recruitmentStatus"], string> = {
 };
 
 const initialValues: MockEnrollmentValues = { name: "", phone: "", salon: "", experience: "", inquiry: "" };
-const successMessage = "테스트 데이터가 로컬 CSV에 저장되었습니다. 실제 수강 신청은 접수되지 않았습니다.";
+const successMessage = "테스트 데이터가 저장되었습니다. 실제 수강 신청은 접수되지 않았습니다.";
 
 function monthKey(value: string): string {
   const date = new Date(value);
@@ -90,7 +90,7 @@ function defaultMonth(offers: readonly MockClassOffer[], initialClassId?: string
   return monthKey((nextOpen ?? offers[0])?.startsAt ?? "");
 }
 
-export function EnrollmentApplicationForm({ offers, initialClassId, requestedClassId, queryWasRepeated, csvStorageAvailable }: EnrollmentApplicationFormProps) {
+export function EnrollmentApplicationForm({ offers, initialClassId, requestedClassId, queryWasRepeated, storageTarget }: EnrollmentApplicationFormProps) {
   const [selectedClassId, setSelectedClassId] = useState(initialClassId ?? "");
   const [activeMonth, setActiveMonth] = useState(() => defaultMonth(offers, initialClassId));
   const [values, setValues] = useState<MockEnrollmentValues>(initialValues);
@@ -220,9 +220,11 @@ export function EnrollmentApplicationForm({ offers, initialClassId, requestedCla
         <span className={styles.noticeMark} aria-hidden="true">!</span>
         <div>
           <p className={styles.testLabel}>DEMO APPLICATION · TEST ONLY</p>
-          <p>{csvStorageAvailable
-            ? "신청 흐름 테스트용 화면입니다. 실제 개인정보가 아닌 임의의 값만 입력해 주세요. 제출한 데이터는 이 로컬 개발 서버의 .local-data/mock-enrollments.csv에 저장되며 외부로 전송되지 않습니다."
-            : "신청 흐름 미리보기 화면입니다. 실제 개인정보가 아닌 임의의 값만 입력해 주세요. Preview 서버는 파일 저장을 지원하지 않아 제출은 로컬 개발 서버에서만 가능합니다."}</p>
+          <p>{storageTarget === "supabase"
+            ? "신청 흐름 테스트용 화면입니다. 실제 개인정보가 아닌 임의의 값만 입력해 주세요. 제출한 테스트 데이터는 Supabase에 저장되며 실제 수강 신청은 접수되지 않습니다."
+            : storageTarget === "local"
+              ? "신청 흐름 테스트용 화면입니다. 실제 개인정보가 아닌 임의의 값만 입력해 주세요. 제출한 데이터는 이 로컬 개발 서버의 .local-data/mock-enrollments.csv에 저장되며 외부로 전송되지 않습니다."
+              : "신청 흐름 미리보기 화면입니다. 실제 개인정보가 아닌 임의의 값만 입력해 주세요. 테스트 신청 저장소가 설정되지 않아 제출할 수 없습니다."}</p>
         </div>
       </aside>
 
@@ -421,11 +423,15 @@ export function EnrollmentApplicationForm({ offers, initialClassId, requestedCla
             </div>
 
             <div className={styles.submitArea}>
-              <Button type="submit" disabled={!selectedOffer || submitting || !csvStorageAvailable}>
+              <Button type="submit" disabled={!selectedOffer || submitting || storageTarget === "unavailable"}>
                 {submitting ? "저장 중…" : "테스트 데이터 저장"} <span aria-hidden="true">{submitting ? "…" : "→"}</span>
               </Button>
               <p className={styles.submitNote}>
-                {csvStorageAvailable ? <><code>.local-data/mock-enrollments.csv</code>에 저장됩니다. 실제 수강 신청은 접수되지 않습니다.</> : "CSV 저장은 로컬 개발 서버에서만 가능합니다."}
+                {storageTarget === "supabase"
+                  ? <>테스트 데이터는 Supabase에 저장됩니다. 실제 수강 신청은 접수되지 않습니다.</>
+                  : storageTarget === "local"
+                    ? <><code>.local-data/mock-enrollments.csv</code>에 저장됩니다. 실제 수강 신청은 접수되지 않습니다.</>
+                    : "테스트 신청 저장소를 설정한 뒤 제출할 수 있습니다."}
               </p>
             </div>
             {submissionError ? <p className={styles.error} role="alert">{submissionError}</p> : null}

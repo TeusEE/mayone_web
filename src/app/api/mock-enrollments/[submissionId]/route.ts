@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { isMockEnrollmentCsvStorageAvailable } from "@/content/mock-class-offers";
 import { deleteMockEnrollmentCsv, updateMockEnrollmentCsv, type MockEnrollmentEditableValues } from "@/lib/mock-enrollment-csv";
 import { isLocalAdminHost } from "@/lib/local-admin";
+import { deleteSupabaseEnrollment, hasSupabaseStorageConfiguration, isSupabaseStorageConfigured, updateSupabaseEnrollment } from "@/lib/supabase-storage";
 
 export const runtime = "nodejs";
 
@@ -113,8 +114,12 @@ export async function PATCH(
   }
 
   try {
-    const filePath = join(process.cwd(), ".local-data", "mock-enrollments.csv");
-    const updated = await updateMockEnrollmentCsv(filePath, submissionId, parsed.values);
+    if (hasSupabaseStorageConfiguration() && !isSupabaseStorageConfigured()) {
+      return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
+    }
+    const updated = isSupabaseStorageConfigured()
+      ? await updateSupabaseEnrollment(submissionId, parsed.values)
+      : await updateMockEnrollmentCsv(join(process.cwd(), ".local-data", "mock-enrollments.csv"), submissionId, parsed.values);
     return updated
       ? jsonResponse({ ok: true }, 200)
       : jsonResponse({ message: "신청 기록을 찾을 수 없습니다." }, 404);
@@ -134,8 +139,12 @@ export async function DELETE(
   if (!isSubmissionId(submissionId)) return jsonResponse({ message: "신청 기록을 찾을 수 없습니다." }, 404);
 
   try {
-    const filePath = join(process.cwd(), ".local-data", "mock-enrollments.csv");
-    const deleted = await deleteMockEnrollmentCsv(filePath, submissionId);
+    if (hasSupabaseStorageConfiguration() && !isSupabaseStorageConfigured()) {
+      return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
+    }
+    const deleted = isSupabaseStorageConfigured()
+      ? await deleteSupabaseEnrollment(submissionId)
+      : await deleteMockEnrollmentCsv(join(process.cwd(), ".local-data", "mock-enrollments.csv"), submissionId);
     return deleted
       ? jsonResponse({ ok: true }, 200)
       : jsonResponse({ message: "신청 기록을 찾을 수 없습니다." }, 404);

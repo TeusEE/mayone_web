@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { getMockClassOffers, isMockEnrollmentAvailable, isMockEnrollmentCsvStorageAvailable } from "@/content/mock-class-offers";
 import { appendMockEnrollmentCsv } from "@/lib/mock-enrollment-csv";
 import { validateMockEnrollment, type MockEnrollmentErrors, type MockEnrollmentValues } from "@/lib/mock-enrollment-form";
+import { createSupabaseEnrollment, hasSupabaseStorageConfiguration, isSupabaseStorageConfigured } from "@/lib/supabase-storage";
 
 export const runtime = "nodejs";
 
@@ -46,8 +47,11 @@ export async function POST(request: Request): Promise<Response> {
   if (!isMockEnrollmentAvailable()) {
     return jsonResponse({ message: "수강 신청 테스트가 비활성화되어 있습니다." }, 404);
   }
-  if (!isMockEnrollmentCsvStorageAvailable()) {
-    return jsonResponse({ message: "CSV 저장은 로컬 개발 서버에서만 사용할 수 있습니다." }, 503);
+  if (!isMockEnrollmentCsvStorageAvailable() && !isSupabaseStorageConfigured()) {
+    return jsonResponse({ message: "신청 저장소가 설정되지 않았습니다." }, 503);
+  }
+  if (hasSupabaseStorageConfiguration() && !isSupabaseStorageConfigured()) {
+    return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
   }
 
   const requestOrigin = request.headers.get("origin");
@@ -98,8 +102,7 @@ export async function POST(request: Request): Promise<Response> {
     }
 
     const submissionId = randomUUID();
-    const filePath = join(process.cwd(), ".local-data", "mock-enrollments.csv");
-    await appendMockEnrollmentCsv(filePath, {
+    const record = {
       submittedAt: new Date().toISOString(),
       submissionId,
       classId: offer!.id,
@@ -110,10 +113,16 @@ export async function POST(request: Request): Promise<Response> {
       experience: values.experience,
       inquiry: values.inquiry,
       testDataAcknowledged: rawBody.agreed,
-    });
+    };
+    if (isSupabaseStorageConfigured()) {
+      await createSupabaseEnrollment(record);
+    } else {
+      const filePath = join(process.cwd(), ".local-data", "mock-enrollments.csv");
+      await appendMockEnrollmentCsv(filePath, record);
+    }
 
     return jsonResponse({ ok: true, submissionId }, 201);
   } catch {
-    return jsonResponse({ message: "테스트 데이터를 CSV 파일에 저장하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 500);
+    return jsonResponse({ message: "테스트 데이터를 저장하지 못했습니다. 저장소 설정과 잠시 후 다시 시도해 주세요." }, 500);
   }
 }

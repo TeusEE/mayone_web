@@ -16,12 +16,17 @@
     "content:test": "tsx scripts/test-content-rules.ts",
     "class-offers:test": "tsx scripts/test-class-offers.ts",
     "class-offers-store:test": "tsx scripts/test-mock-class-offer-store.ts",
-    "enrollment-csv:test": "tsx scripts/test-enrollment-csv.ts"
+    "branches:test": "tsx scripts/test-admin-branches.ts",
+    "enrollment-csv:test": "tsx scripts/test-enrollment-csv.ts",
+    "supabase:import-local": "node --conditions=react-server --import tsx scripts/import-local-data-to-supabase.ts",
+    "supabase-storage:test": "node --conditions=react-server --import tsx scripts/test-supabase-storage.ts"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
     "next": "16.3.6",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@eslint/compat": "2.1.1",

@@ -1,0 +1,165 @@
+import assert from "node:assert/strict";
+import {
+  createSupabaseBranch,
+  createSupabaseClassOffer,
+  createSupabaseEnrollment,
+  deleteSupabaseBranch,
+  deleteSupabaseClassOffer,
+  deleteSupabaseEnrollment,
+  getSupabaseDataTarget,
+  getSupabaseBranches,
+  getSupabaseClassOffers,
+  getSupabaseEnrollments,
+  isSupabaseStorageConfigured,
+  supabaseStorageConfigurationMessage,
+  updateSupabaseBranch,
+  updateSupabaseClassOffer,
+  updateSupabaseEnrollment,
+} from "../src/lib/supabase-storage";
+import type { Branch } from "../src/types/content";
+import type { MockClassOffer } from "../src/lib/mock-class-offers";
+import type { MockEnrollmentCsvRecord } from "../src/lib/mock-enrollment-csv";
+
+process.env.SUPABASE_URL = "https://unit-test.supabase.co";
+process.env.SUPABASE_SECRET_KEY = "sb_secret_unit_test_only";
+process.env.SUPABASE_DATA_TARGET = "test";
+delete process.env.VERCEL_ENV;
+
+type TableName = "mayone_branches" | "mayone_class_offers" | "mayone_enrollments";
+type Row = { id: string; data: Record<string, unknown> };
+const database: Record<TableName, Row[]> = {
+  mayone_branches: [],
+  mayone_class_offers: [],
+  mayone_enrollments: [],
+};
+
+function eqValue(url: URL): string | undefined {
+  const value = url.searchParams.get("id");
+  return value?.startsWith("eq.") ? value.slice(3) : undefined;
+}
+
+function respond(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+}
+
+const originalFetch = globalThis.fetch;
+globalThis.fetch = async (input, init) => {
+  const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.href : input.url);
+  const table = url.pathname.split("/").at(-1) as TableName;
+  const rows = database[table];
+  const method = init?.method ?? "GET";
+  const id = eqValue(url);
+  const headers = new Headers(init?.headers);
+  assert.equal(headers.get("apikey"), process.env.SUPABASE_SECRET_KEY);
+
+  if (method === "GET") return respond(id ? rows.filter((row) => row.id === id) : rows);
+  if (method === "POST") {
+    const parsed = JSON.parse(String(init?.body)) as Row | Row[];
+    const incoming = Array.isArray(parsed) ? parsed : [parsed];
+    if (incoming.some((record) => rows.some((row) => row.id === record.id))) {
+      return respond({ code: "23505", message: "duplicate key value violates unique constraint" }, 409);
+    }
+    rows.push(...incoming);
+    return respond(headers.get("Prefer")?.includes("return=representation") ? incoming.map((row) => ({ id: row.id })) : null, 201);
+  }
+  if (method === "PATCH") {
+    const index = rows.findIndex((row) => row.id === id);
+    if (index < 0) return respond([], 200);
+    const body = JSON.parse(String(init?.body)) as { data: Record<string, unknown> };
+    rows[index] = { ...rows[index], data: body.data };
+    return respond([{ id }]);
+  }
+  if (method === "DELETE") {
+    const removed = rows.filter((row) => row.id === id);
+    database[table] = rows.filter((row) => row.id !== id);
+    return respond(removed.map((row) => ({ id: row.id })));
+  }
+  return respond({ message: `Unexpected method ${method}` }, 405);
+};
+
+const branch: Branch = {
+  id: "test-branch",
+  publicationState: "draft",
+  reviewState: "pending",
+  officialName: "테스트 지점",
+  operationState: "unknown",
+};
+
+const offer: MockClassOffer = {
+  id: "test-course",
+  title: "테스트 커트 과정",
+  category: "CUT",
+  instructorLabel: "테스트 강사",
+  summary: "과정 저장 테스트",
+  audience: "디자이너",
+  startsAt: "2099-04-01T10:00:00+09:00",
+  endsAt: "2099-04-01T12:00:00+09:00",
+  timeZone: "Asia/Seoul",
+  location: "서울",
+  tuitionKrw: 1000,
+  materials: "",
+  recruitmentStatus: "open",
+  applicationDeadline: "2099-03-01T10:00:00+09:00",
+  isMock: true,
+};
+
+const enrollment: MockEnrollmentCsvRecord = {
+  submittedAt: "2026-10-02T03:00:00.000Z",
+  submissionId: "9e2cd7fb-9e19-4c45-87f5-024044907fe8",
+  classId: offer.id,
+  classTitle: offer.title,
+  name: "테스트 신청자",
+  phone: "01012345678",
+  salon: "테스트 살롱",
+  experience: "3년",
+  inquiry: "저장소 테스트",
+  testDataAcknowledged: true,
+};
+
+async function main(): Promise<void> {
+  assert.equal(isSupabaseStorageConfigured(), true);
+  assert.equal(getSupabaseDataTarget(), "test");
+  process.env.SUPABASE_DATA_TARGET = "production";
+  assert.equal(isSupabaseStorageConfigured(), false);
+  assert.match(supabaseStorageConfigurationMessage() ?? "", /SUPABASE_DATA_TARGET=test/u);
+  process.env.VERCEL_ENV = "production";
+  assert.equal(isSupabaseStorageConfigured(), true);
+  assert.equal(getSupabaseDataTarget(), "production");
+  process.env.SUPABASE_DATA_TARGET = "test";
+  assert.equal(isSupabaseStorageConfigured(), false);
+  assert.match(supabaseStorageConfigurationMessage() ?? "", /SUPABASE_DATA_TARGET=production/u);
+  process.env.SUPABASE_DATA_TARGET = "production";
+
+  assert.equal(await createSupabaseBranch(branch), true);
+  assert.deepEqual(await getSupabaseBranches(), [branch]);
+  assert.equal(await createSupabaseBranch(branch), false);
+  const updatedBranch = { ...branch, officialName: "수정 테스트 지점" };
+  assert.equal(await updateSupabaseBranch(branch.id, updatedBranch), true);
+  assert.equal((await getSupabaseBranches())[0].officialName, updatedBranch.officialName);
+  assert.equal(await deleteSupabaseBranch(branch.id), true);
+  assert.equal(await deleteSupabaseBranch(branch.id), false);
+
+  assert.equal(await createSupabaseClassOffer(offer), true);
+  assert.deepEqual(await getSupabaseClassOffers(), [offer]);
+  const updatedOffer = { ...offer, title: "수정 테스트 과정" };
+  assert.equal(await updateSupabaseClassOffer(offer.id, updatedOffer), true);
+  assert.equal((await getSupabaseClassOffers())[0].title, updatedOffer.title);
+  assert.equal(await deleteSupabaseClassOffer(offer.id), true);
+
+  assert.equal(await createSupabaseEnrollment(enrollment), true);
+  assert.deepEqual(await getSupabaseEnrollments(), [enrollment]);
+  const editedValues = { ...enrollment, name: "수정 신청자" };
+  assert.equal(await updateSupabaseEnrollment(enrollment.submissionId, editedValues), true);
+  assert.equal((await getSupabaseEnrollments())[0].name, editedValues.name);
+  assert.equal(await deleteSupabaseEnrollment(enrollment.submissionId), true);
+  assert.equal(await deleteSupabaseEnrollment(enrollment.submissionId), false);
+
+  globalThis.fetch = originalFetch;
+  console.log("Supabase storage CRUD and row parsing tests passed.");
+}
+
+main().catch((error: unknown) => {
+  globalThis.fetch = originalFetch;
+  console.error(error);
+  process.exitCode = 1;
+});

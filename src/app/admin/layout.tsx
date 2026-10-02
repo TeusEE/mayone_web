@@ -23,6 +23,7 @@ export default async function AdminLayout({ children }: Readonly<{ children: Rea
             <Link href="/admin">관리 홈</Link>
             <Link href="/admin/enrollments">수강 신청자</Link>
             <Link href="/admin/classes">수강 과목 관리</Link>
+            <Link href="/admin/branches">지점 관리</Link>
           </nav>
         </div>
       </div>

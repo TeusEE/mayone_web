@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { EnrollmentApplicationForm } from "@/components/haru/EnrollmentApplicationForm";
-import { getMockClassOffers, isMockEnrollmentAvailable, isMockEnrollmentCsvStorageAvailable } from "@/content/mock-class-offers";
+import { getMockClassOffers, isMockEnrollmentAvailable } from "@/content/mock-class-offers";
+import { getMockEnrollmentStorageTarget } from "@/content/mock-enrollments";
 import { canApplyToMockOffer } from "@/lib/mock-class-offers";
 import { createPageMetadata } from "@/lib/seo";
 import styles from "./page.module.css";
@@ -50,7 +51,7 @@ export default async function ApplyPage({ searchParams }: ApplyPageProps) {
         initialClassId={initialClassId}
         requestedClassId={requestedClassId}
         queryWasRepeated={Array.isArray(query.classId)}
-        csvStorageAvailable={isMockEnrollmentCsvStorageAvailable()}
+        storageTarget={getMockEnrollmentStorageTarget()}
       />
     </div>
   );
