@@ -1,3 +1,4 @@
+import { jsonResponse, readJsonRequestBody, checkSameOriginRequest } from "@/lib/http";
 import { randomUUID } from "node:crypto";
 import { join } from "node:path";
 import { getMockClassOffers, isMockEnrollmentAvailable, isMockEnrollmentCsvStorageAvailable } from "@/content/mock-class-offers";
@@ -15,10 +16,6 @@ const fieldLimits: Record<keyof MockEnrollmentValues, number> = {
   experience: 60,
   inquiry: 500,
 };
-
-function jsonResponse(body: Record<string, unknown>, status: number): Response {
-  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -54,29 +51,12 @@ export async function POST(request: Request): Promise<Response> {
     return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
   }
 
-  const requestOrigin = request.headers.get("origin");
-  if (!requestOrigin || requestOrigin !== new URL(request.url).origin) {
-    return jsonResponse({ message: "요청 출처를 확인할 수 없습니다." }, 403);
-  }
-  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
-    return jsonResponse({ message: "JSON 형식으로 제출해 주세요." }, 415);
-  }
+  const originError = checkSameOriginRequest(request, true);
+  if (originError) return originError;
 
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
-    return jsonResponse({ message: "제출 내용이 너무 큽니다." }, 413);
-  }
-
-  let rawBody: unknown;
-  try {
-    const bodyText = await request.text();
-    if (new TextEncoder().encode(bodyText).byteLength > MAX_REQUEST_BYTES) {
-      return jsonResponse({ message: "제출 내용이 너무 큽니다." }, 413);
-    }
-    rawBody = JSON.parse(bodyText);
-  } catch {
-    return jsonResponse({ message: "제출 내용을 읽을 수 없습니다." }, 400);
-  }
+  const parsed = await readJsonRequestBody(request, MAX_REQUEST_BYTES);
+  if (parsed.response) return parsed.response;
+  const rawBody = parsed.body;
 
   if (!isRecord(rawBody) || typeof rawBody.classId !== "string" || rawBody.classId.length > 100) {
     return jsonResponse({ message: "신청 과정을 확인해 주세요." }, 400);
@@ -115,7 +95,8 @@ export async function POST(request: Request): Promise<Response> {
       testDataAcknowledged: rawBody.agreed,
     };
     if (isSupabaseStorageConfigured()) {
-      await createSupabaseEnrollment(record);
+      const created = await createSupabaseEnrollment(record);
+      if (!created) return jsonResponse({ message: "신청 기록을 저장하지 못했습니다. 다시 시도해 주세요." }, 409);
     } else {
       const filePath = join(process.cwd(), ".local-data", "mock-enrollments.csv");
       await appendMockEnrollmentCsv(filePath, record);

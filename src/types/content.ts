@@ -127,6 +127,7 @@ export interface AcademyClass extends ContentRecord {
   title: string;
   category: ClassCategory;
   instructorIds: readonly string[];
+  instructorNames?: readonly string[];
   introduction: string;
   audience: readonly string[];
   curriculum: readonly string[];

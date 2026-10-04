@@ -1,5 +1,6 @@
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TimeBoundAction } from "@/components/ui/TimeBoundAction";
 import { getBrandCopyForDevelopmentReview, getPublicCommonLinks, getPublicJobs } from "@/content/queries";
 import { getJobApplicationAvailability, isValidExternalUrl } from "@/lib/actions";
 import type { CommonLink } from "@/types/content";
@@ -36,7 +37,7 @@ export async function HomeLanding() {
   const publicJobs = getPublicJobs();
   const now = new Date();
   const jobApplication = publicJobs
-    .map((item) => getJobApplicationAvailability(item, now))
+    .map((job) => ({ job, ...getJobApplicationAvailability(job, now) }))
     .find((availability) => availability.enabled && availability.href);
   const publicLinks = getPublicCommonLinks();
   const marketLink = publicLinks.find((link) => link.purpose === "market");
@@ -192,7 +193,7 @@ export async function HomeLanding() {
           <div className={styles.buttonRowLeft}>
             <ButtonLink href="/recruit">채용공고 보기</ButtonLink>
             {jobApplication?.href ? (
-              <ButtonLink href={jobApplication.href} external variant="secondary">입사지원</ButtonLink>
+              <TimeBoundAction eligible href={jobApplication.href} expiresAt={jobApplication.job.deadlineAt} label="입사지원" disabledReason="지원 안내 준비 중" variant="secondary" />
             ) : (
               <Button disabled variant="secondary">입사지원</Button>
             )}

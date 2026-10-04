@@ -6,20 +6,20 @@ import { RelatedListLink } from "@/components/ui/RelatedListLink";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TimeBoundAction } from "@/components/ui/TimeBoundAction";
-import { getPublicBranches, getPublicJobById, getPublicJobs } from "@/content/queries";
+import { getPublicJobById } from "@/content/queries";
+import { getSalonDirectoryData } from "@/content/local-branches";
 import { getJobApplicationAvailability, isValidExternalUrl } from "@/lib/actions";
 import { createPageMetadata } from "@/lib/seo";
 import type { RecruitmentStatus } from "@/types/content";
 import styles from "@/app/content-pages.module.css";
 
-export function generateStaticParams() {
-  return getPublicJobs().map((job) => ({ jobId: job.id }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ jobId: string }> }): Promise<Metadata> {
   const { jobId } = await params;
   const job = getPublicJobById(jobId);
-  const branch = job ? getPublicBranches().find((item) => item.id === job.branchId) : undefined;
+  const { branches } = await getSalonDirectoryData();
+  const branch = job ? branches.find((item) => item.id === job.branchId) : undefined;
   const publishedJob = job && branch ? job : undefined;
   return createPageMetadata({
     title: publishedJob?.title ?? "채용 정보",
@@ -64,7 +64,8 @@ export default async function JobDetailPage({ params }: { params: Promise<{ jobI
   const { jobId } = await params;
   const job = getPublicJobById(jobId);
   if (!job) notFound();
-  const branch = getPublicBranches().find((item) => item.id === job.branchId);
+  const { branches } = await getSalonDirectoryData();
+  const branch = branches.find((item) => item.id === job.branchId);
   if (!branch) notFound();
 
   const application = getJobApplicationAvailability(job, new Date(0));

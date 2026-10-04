@@ -7,6 +7,7 @@ import {
   deleteSupabaseClassOffer,
   deleteSupabaseEnrollment,
   getSupabaseDataTarget,
+  hasSupabaseStorageConfiguration,
   getSupabaseBranches,
   getSupabaseClassOffers,
   getSupabaseEnrollments,
@@ -16,6 +17,9 @@ import {
   updateSupabaseClassOffer,
   updateSupabaseEnrollment,
 } from "../src/lib/supabase-storage";
+import { getAdminBranchCatalog, getSalonDirectoryData } from "../src/content/local-branches";
+import { getMockClassOffers } from "../src/content/mock-class-offers";
+import { getMockEnrollmentStorageTarget } from "../src/content/mock-enrollments";
 import type { Branch } from "../src/types/content";
 import type { MockClassOffer } from "../src/lib/mock-class-offers";
 import type { MockEnrollmentCsvRecord } from "../src/lib/mock-enrollment-csv";
@@ -52,7 +56,12 @@ globalThis.fetch = async (input, init) => {
   const headers = new Headers(init?.headers);
   assert.equal(headers.get("apikey"), process.env.SUPABASE_SECRET_KEY);
 
-  if (method === "GET") return respond(id ? rows.filter((row) => row.id === id) : rows);
+  if (method === "GET") {
+    if (id) return respond(rows.filter((row) => row.id === id));
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    const limit = Number(url.searchParams.get("limit") ?? 1000);
+    return respond(rows.slice(offset, offset + limit));
+  }
   if (method === "POST") {
     const parsed = JSON.parse(String(init?.body)) as Row | Row[];
     const incoming = Array.isArray(parsed) ? parsed : [parsed];
@@ -132,6 +141,7 @@ async function main(): Promise<void> {
 
   assert.equal(await createSupabaseBranch(branch), true);
   assert.deepEqual(await getSupabaseBranches(), [branch]);
+  assert.deepEqual(await getAdminBranchCatalog(), [branch], "remote branch reads also work outside development");
   assert.equal(await createSupabaseBranch(branch), false);
   const updatedBranch = { ...branch, officialName: "수정 테스트 지점" };
   assert.equal(await updateSupabaseBranch(branch.id, updatedBranch), true);
@@ -139,20 +149,46 @@ async function main(): Promise<void> {
   assert.equal(await deleteSupabaseBranch(branch.id), true);
   assert.equal(await deleteSupabaseBranch(branch.id), false);
 
+  const publicBranch = {
+    ...branch, publicationState: "published" as const, reviewState: "confirmed" as const,
+    confirmedAt: "2026-10-04T00:00:00Z", region: "서울", address: "테스트 주소",
+    operationState: "active" as const, placeUrl: "https://example.com/internal-reference", internalNote: "private",
+  };
+  assert.equal(await createSupabaseBranch(publicBranch), true);
+  const directory = await getSalonDirectoryData();
+  assert.equal(directory.branches.length, 1);
+  assert.equal("placeUrl" in directory.branches[0], false);
+  assert.equal("internalNote" in directory.branches[0], false);
+  await deleteSupabaseBranch(branch.id);
+  assert.deepEqual(await getMockClassOffers(), { offers: [], errors: [] }, "production does not read mock catalogs");
+
   assert.equal(await createSupabaseClassOffer(offer), true);
   assert.deepEqual(await getSupabaseClassOffers(), [offer]);
-  const updatedOffer = { ...offer, title: "수정 테스트 과정" };
+  const updatedOffer = { ...offer, title: "=수정 테스트 과정" };
   assert.equal(await updateSupabaseClassOffer(offer.id, updatedOffer), true);
   assert.equal((await getSupabaseClassOffers())[0].title, updatedOffer.title);
   assert.equal(await deleteSupabaseClassOffer(offer.id), true);
 
   assert.equal(await createSupabaseEnrollment(enrollment), true);
   assert.deepEqual(await getSupabaseEnrollments(), [enrollment]);
-  const editedValues = { ...enrollment, name: "수정 신청자" };
+  const editedValues = { ...enrollment, name: "수정 신청자", inquiry: "=관리자 문의" };
   assert.equal(await updateSupabaseEnrollment(enrollment.submissionId, editedValues), true);
   assert.equal((await getSupabaseEnrollments())[0].name, editedValues.name);
+  assert.equal((await getSupabaseEnrollments())[0].inquiry, editedValues.inquiry, "DB reads preserve formula-like text without export escaping");
   assert.equal(await deleteSupabaseEnrollment(enrollment.submissionId), true);
   assert.equal(await deleteSupabaseEnrollment(enrollment.submissionId), false);
+
+  database.mayone_enrollments = Array.from({ length: 1001 }, (_, index) => ({
+    id: `record-${index}`, data: { ...enrollment, submissionId: `record-${index}` },
+  }));
+  assert.equal((await getSupabaseEnrollments()).length, 1001, "reads continue past the PostgREST page limit");
+
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SECRET_KEY;
+  process.env.NEXT_PUBLIC_SUPABASE_URL = "https://auth-only.supabase.co";
+  assert.equal(hasSupabaseStorageConfiguration(), false, "Auth URL alone does not configure storage");
+  process.env.SUPABASE_URL = "https://unit-test.supabase.co";
+  assert.equal(getMockEnrollmentStorageTarget(), "unavailable", "invalid storage settings never advertise local submission");
 
   globalThis.fetch = originalFetch;
   console.log("Supabase storage CRUD and row parsing tests passed.");

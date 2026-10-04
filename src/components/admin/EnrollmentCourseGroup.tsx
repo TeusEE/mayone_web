@@ -5,7 +5,7 @@ import type { MockEnrollmentCourseGroup as CourseGroup } from "@/lib/mock-enroll
 import EnrollmentRecordCard from "@/components/admin/EnrollmentRecordCard";
 import styles from "./EnrollmentCourseGroup.module.css";
 
-export default function EnrollmentCourseGroup({ group }: { group: CourseGroup }) {
+export default function EnrollmentCourseGroup({ group, readOnly = false }: { group: CourseGroup; readOnly?: boolean }) {
   const [expanded, setExpanded] = useState(false);
   const headingId = useId();
   const applicantListId = useId();
@@ -51,7 +51,7 @@ export default function EnrollmentCourseGroup({ group }: { group: CourseGroup })
         <ol className={styles.applicantList} aria-label={`${group.classTitle} 신청자 목록`}>
           {group.records.map((record) => (
             <li key={record.submissionId}>
-              <EnrollmentRecordCard record={record} groupedCourseTitle={group.classTitle} />
+              <EnrollmentRecordCard record={record} groupedCourseTitle={group.classTitle} readOnly={readOnly} />
             </li>
           ))}
         </ol>

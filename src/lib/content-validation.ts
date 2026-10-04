@@ -158,7 +158,7 @@ function validateClass(record: AcademyClass): string[] {
   const errors = requiredPublished(record, [
     ["교육명", Boolean(record.title.trim())],
     ["분야", Boolean(record.category)],
-    ["강사", record.instructorIds.length > 0],
+    ["강사", record.instructorIds.length > 0 || Boolean(record.instructorNames?.some((name) => name.trim()))],
     ["교육 내용", Boolean(record.introduction.trim())],
     ["대상", record.audience.length > 0],
     ["커리큘럼", record.curriculum.length > 0],

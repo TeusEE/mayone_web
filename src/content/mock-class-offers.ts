@@ -14,6 +14,7 @@ export function isMockEnrollmentCsvStorageAvailable(): boolean {
 }
 
 export async function getMockClassOffers() {
+  if (!isMockEnrollmentAvailable()) return { offers: [], errors: [] as string[] };
   if (hasSupabaseStorageConfiguration()) {
     if (!isSupabaseStorageConfigured()) throw new Error("Supabase 환경변수를 확인해 주세요.");
     return { offers: await getSupabaseClassOffers(), errors: [] as string[] };

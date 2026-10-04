@@ -63,7 +63,7 @@ function hasClassApplicationDetails(item: AcademyClass): boolean {
       item.tuition.amount >= 0 &&
       item.tuition.currency === "KRW" &&
       item.cancellationPolicy.trim() &&
-      item.instructorIds.length > 0,
+      (item.instructorIds.length > 0 || Boolean(item.instructorNames?.some((name) => name.trim()))),
   );
 }
 

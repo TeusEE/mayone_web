@@ -7,10 +7,13 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { TimeBoundAction } from "@/components/ui/TimeBoundAction";
 import { getMockClassOffers, isMockEnrollmentAvailable } from "@/content/mock-class-offers";
 import { getClassApplicationAvailability } from "@/lib/actions";
-import { getPublicClassById, getPublicClasses, getPublicInstructors } from "@/content/queries";
+import { getPublicAcademyClassByIdForPage, getPublicClasses, getPublicInstructors } from "@/content/queries";
 import { createPageMetadata } from "@/lib/seo";
 import type { RecruitmentStatus } from "@/types/content";
 import styles from "@/app/content-pages.module.css";
+
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
 
 export async function generateStaticParams() {
   const publishedClasses = getPublicClasses().map((item) => ({ classId: item.id }));
@@ -23,7 +26,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ classId: string }> }): Promise<Metadata> {
   const { classId } = await params;
-  const item = getPublicClassById(classId);
+  const item = await getPublicAcademyClassByIdForPage(classId);
   if (!item && isMockEnrollmentAvailable()) {
     const mockOffer = (await getMockClassOffers()).offers.find((offer) => offer.id === classId);
     if (mockOffer) {
@@ -84,7 +87,7 @@ function blockedReason(reason: string | undefined): string {
 
 export default async function ClassDetailPage({ params }: { params: Promise<{ classId: string }> }) {
   const { classId } = await params;
-  const item = getPublicClassById(classId);
+  const item = await getPublicAcademyClassByIdForPage(classId);
   if (!item) {
     if (isMockEnrollmentAvailable()) {
       const mockOffer = (await getMockClassOffers()).offers.find((offer) => offer.id === classId);
@@ -127,7 +130,9 @@ export default async function ClassDetailPage({ params }: { params: Promise<{ cl
               </article>
             ))}
           </div>
-        ) : <p className={styles.muted}>강사 정보를 준비하고 있습니다.</p>}
+        ) : null}
+        {item.instructorNames?.length ? <p className={styles.muted}>강사: {item.instructorNames.join(", ")}</p> : null}
+        {instructors.length === 0 && !item.instructorNames?.length ? <p className={styles.muted}>강사 정보를 준비하고 있습니다.</p> : null}
       </section>
 
       <section className={styles.section} aria-labelledby="class-content-title">

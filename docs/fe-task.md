@@ -1,13 +1,13 @@
 # MAY.ONE 프론트엔드 구현 작업
 
 - 작성일: 2026-09-27
-- 최근 갱신: 2026-10-02
+- 최근 갱신: 2026-10-04
 - 기준: [fe-prd.md](./fe-prd.md)
 - 핵심 기준: [원본 홈페이지 HTML](../origin_source/mayone_homepage.html), [fe-prd.md](./fe-prd.md)
 - 구현 가이드: [frontend-style-guide.md](./frontend-style-guide.md) · 보관 참고: [visualsalon-reference.md](./visualsalon-reference.md)
 - 운영자료 후보: [webpage_contents.md](../origin_source/webpage_contents.md)
 
-현재 상태: A~C의 화면·목록 기능을 구현했고, 네이버 플레이스에서 확인한 8개 지점의 방문 정보와 예약 링크를 `/salon`에 공개했다. 지점 상세 화면은 정보 수집 전까지 임시 비활성화한다. D의 기본 검증과 핵심 앵커 QA, E의 GitHub push·Vercel Production 수동 배포를 완료했다. FE-T25~FE-T38 CSV mock 신청, 로컬 개발용 관리자 홈, 신청자·수강 과목·지점 관리, 과정별 신청 요약·상세, 분야별 제목·인원 시각적 과정 그룹과 그룹 내 시작일순 표시, 과정 모달·단계형 동선을 구현·검증했다. FE-T39의 테스트 DB 저장 코드·migration·RLS, 로컬 데이터 가져오기·CRUD 검증을 완료하고 `.env.local`을 테스트 target으로 지정했다. Preview도 테스트 DB를 사용하며 Vercel Production에는 별도 운영 DB 환경변수·migration·운영 데이터가 필요하다. Preview 저장과 Production 신청·관리자 조회·변경은 비활성 상태를 유지한다. 공식 도메인·Vercel 자동 Git 배포·나머지 지점 자료·전체 반응형/접근성 QA는 남아 있다.
+현재 상태: A~C의 화면·목록 기능을 구현했고, 네이버 플레이스에서 확인한 8개 지점의 방문 정보와 예약 링크를 `/salon`에 공개했다. 지점 상세 화면은 정보 수집 전까지 임시 비활성화한다. D의 기본 검증과 핵심 앵커 QA, E의 GitHub push·Vercel Production 배포를 완료했다. FE-T25~FE-T38 CSV mock 신청, 로컬 개발용 관리자 홈, 신청자·수강 과목·지점 관리와 관련 검증을 완료했다. FE-T39 테스트·운영 Supabase 연결과 Production `/salon`의 운영 DB 조회도 완료했다. FE-T40에서는 초대형 Supabase Auth 이메일·비밀번호 로그인과 서버 전용 `ADMIN_EMAIL_ALLOWLIST` 검사, 관리자 페이지/API 보호를 구현했으며 2단계 인증은 제거했다. 공개 회원가입은 꺼져 있고 로컬 테스트 환경에는 현재 확인된 관리자 이메일을 설정한다. 현재 승인된 관리자 이메일을 Vercel Production 허용 목록에 등록하고 최신 Auth 코드를 배포했다. 운영 로그인 화면과 공개 페이지·미인증 접근 차단의 14개 HTTP 확인을 통과했으며 운영 첫 관리자 초대 요청과 계정 생성은 완료했으며 실제 메일 수신·비밀번호 설정·로그인·로그아웃 검증은 남아 있다. FE-T41의 DB RLS 전환과 FE-T42의 실제 비회원 신청 API는 미구현이다. 현재 코드도 Production 수강 신청과 원격 관리자 변경을 차단하며 운영 지점 조회만 허용한다. 운영 인증 코드는 2026-10-04 배포 `dpl_75nC8mVyjGSeUaXKRyHr13Q8c4eH`에서 기본 경로를 확인했으며, Vercel Preview DB 변수는 없다. 공식 도메인·Vercel 자동 Git 배포, 나머지 지점 자료·전체 반응형/접근성 QA도 남아 있다. 이번 코드·문서 점검과 리팩터링은 FE-T43 및 [project-audit.md](./project-audit.md)에 기록한다.
 
 ## 1. 작업 관리 원칙
 
@@ -16,6 +16,29 @@
 - 자료를 기다리는 동안 공통 UI·라우트·빈 상태·검수용 fixture로 구현을 계속한다. 임의의 운영 데이터로 공개 조건을 충족시키지 않는다.
 - P0는 이번 구현의 필수 작업, P1은 자료 확보 시 반영할 선택 콘텐츠다. FUTURE는 이번 릴리스에서 제외한다.
 - 관련 요구사항의 FE/NFR 번호는 `fe-prd.md`와 연결된다. 각 작업의 의존성은 선행 작업을 뜻하며, 자료 확보는 별도의 공개 조건이다.
+
+### 1.1 요구사항과 작업 대응표
+
+하나의 요구사항이 화면·자료·권한·배포 작업에 걸칠 수 있다. 과거 단계의 체크는 해당 단계 구현 기록이며, 아래의 남은 조건과 후속 작업까지 충족해야 최종 요구사항이 완료된다.
+
+| PRD 요구사항 | 대응 작업 | 현재 상태 / 남은 완료 조건 |
+| --- | --- | --- |
+| FE-01 공통 레이아웃·이동 | T05~T06·T20·T43 | 구현 완료; 전체 키보드·확대·reduced-motion QA 대기 |
+| FE-02 브랜드 랜딩 | T07~T10·T20~T21 | 원본 랜딩 구현; 전체 폭 시각 QA 대기 |
+| FE-03 지점 | T02~T03·T08·T11~T12·T38~T41·T43 | 공개 지점 목록·검색·예약과 테스트 CRUD 구현; 상세 자료·관리자 JWT/RLS 대기 |
+| FE-04 교육·신청·관리 | T09·T13~T14·T25~T37·T39~T42·T43 | 정적 교육 화면과 mock 시연 구현; 실제 과정 모델·동의·비회원 신청·운영 공개 미완료 |
+| FE-05 산학협력 | T02~T03·T09·T15·T23 | 화면 구현; 공개 프로그램·사례·담당 채널 대기 |
+| FE-06 마켓 | T02·T10·T23 | 스토어 주소 반영; 실제 접속·대표 상품 검증 대기 |
+| FE-07 채용 | T02~T03·T10·T16·T23·T43 | 목록·상세·CTA 규칙 구현; 실제 공고·지원 수단 대기 |
+| FE-08 브랜드·선택 콘텐츠 | T02·T08·T17·T23 | About 구현; 추가 프로필·선택 자료 대기 |
+| FE-09 공개·CTA 상태 | T03·T05·T11~T17·T19·T23·T27·T41~T43 | 공개 필터·404·기한 규칙 구현; 실제 신청 정책·모든 외부 목적지 검증 대기 |
+| NFR-01 접근성 | T04~T06·T20·T26~T29·T31~T38·T43 | 접근성 기능 구현; 전체 화면 브라우저 QA 대기 |
+| NFR-02 성능·이미지 | T18·T21·T27~T38 | 이미지 컴포넌트 구현; 실제 이미지·Lighthouse 대기 |
+| NFR-03 SEO·공유 | T18·T22~T24·T27·T30~T34·T38·T43 | 환경별 noindex·메타데이터 구현; 공식 도메인·공유 에셋 대기 |
+| NFR-04 유지보수·안정성 | T01·T03·T19·T21·T39·T43 | 로컬 정적 검사·중요 규칙·빌드 검증; 배포 후 전체 여정 대기 |
+| NFR-05 신청·관리자 권한 | T39~T43 | Auth 가드 구현; 실제 계정 검증·JWT/RLS·실제 비회원 신청·운영 공개 대기 |
+
+체크 근거는 작업 내 검증 기록과 FE-T43의 최신 로컬 점검 결과를 사용한다. 현재 RLS는 서버 Secret key 전용 초기 정책이며 FE-T41의 역할별 정책 완료를 뜻하지 않는다.
 
 ## 2. 단계와 권장 순서
 
@@ -26,7 +49,10 @@
 | C. 목록·상세 | FE-T11~FE-T17 | 지점·교육·산학협력·채용·브랜드 정보 페이지 | 구현 완료; 실제 운영 자료 공개는 대기 |
 | D. 품질 검증 | FE-T18~FE-T21 | 공개 이미지·SEO, 상태 테스트, 반응형·접근성·빌드 검증 | lint·타입·콘텐츠 테스트·build와 핵심 반복 앵커 QA 통과; 전체 화면·접근성·Lighthouse QA 대기 |
 | E. 배포·운영 | FE-T22~FE-T24 | Preview 검수, 콘텐츠 공개 점검, Production 배포·운영 인계 | GitHub push 및 Production 배포 완료; 공식 도메인·자동 배포·운영 인계 대기 |
-| F. 수강 신청·로컬 관리자 시연 | FE-T25~FE-T38 | CSV mock 과정, 단계형 신청, 개발 전용 저장, 관리자 홈·신청자/과목/지점 관리, 분야별 과정 그룹, 환경별 제한 | 구현·Playwright CRUD/공개 목록 반영 및 자동 테스트·프로덕션 빌드 검증 완료; 실제 접수·운영 관리자는 별도 범위 |
+| F. 수강 신청·로컬 관리자 시연 | FE-T25~FE-T38 | CSV mock 과정, 단계형 신청, 개발 전용 저장, 관리자 홈·신청자/과목/지점 관리, 분야별 과정 그룹, 환경별 제한 | mock 시연 기능 검증 완료; 공개 실제 신청과 인증 관리자 기능은 H단계 |
+| G. Supabase 데이터 환경 분리 | FE-T39 | 테스트 DB·운영 DB 연결, RLS migration, 테스트 분리, 공개 지점 운영 데이터 반영 | 로컬 테스트 DB 및 Production 운영 DB 연결·RLS·8개 공개 지점 조회 완료; Vercel Preview 테스트 DB 연결은 대기 |
+| H. 관리자 권한·비회원 수강 신청 | FE-T40~FE-T42 | 관리자 이메일 허용 목록과 비밀번호 로그인, RLS, 비회원 신청 API, Production 공개 검증 | FE-T40 인증 구현·Production 배포와 기본 HTTP 검증 완료; 실제 계정 비밀번호·로그인 검증 대기. FE-T41~42 미구현 |
+| I. 정합성 점검·리팩터링 | FE-T43 | PRD 대응표, 구현/운영/후속 상태 정리, 공통 저장·API 처리, 환경 제한·공개 데이터 일관성 | 코드·문서·자동 검증·로컬 HTTP 점검 완료; 남은 운영 조건은 FE-T40~T42 및 점검 기록 참조 |
 
 FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립적으로 진행할 수 있다. 토큰·공통 컴포넌트를 완성한 뒤 메인을 먼저 만들고, 동일한 콘텐츠 조회 계층으로 목록·상세를 확장한다.
 
@@ -38,7 +64,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] 저장소 루트에 Next.js App Router + TypeScript strict 프로젝트를 구성한다. `docs/`와 `origin_source/`를 보존한다.
 - [x] 지원되는 안정 Next.js·React와 Vercel 호환 Node.js를 확인해 버전을 기록한다. 패키지 매니저와 lockfile을 하나로 통일한다.
 - [x] `src/app`, `components`, `content`, `types`, `lib`, 공개 이미지 폴더의 기본 구조를 만든다.
-- [x] 개발·lint·타입 검사·콘텐츠 검증·build 명령과 `.gitignore`, `.env.example`, 실행 안내를 정리한다. 인증·Supabase 설정은 넣지 않는다.
+- [x] 개발·lint·타입 검사·콘텐츠 검증·build 명령과 `.gitignore`, `.env.example`, 실행 안내를 정리한다. 이후 추가된 관리자 Auth·Supabase 환경변수와 명령은 FE-T39~T40 및 README에 반영한다.
 - 완료 기준: 기본 페이지가 로컬에서 실행되고 lint·타입 검사·build가 통과한다. 기존 문서와 원자료가 유지된다.
 
 ### FE-T02. 콘텐츠·이미지·외부 링크 자료 목록 정리
@@ -211,7 +237,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 ### FE-T19. 중요한 콘텐츠·상태 규칙 검증
 
 - 우선순위: P0 / 요구사항: FE-03~FE-09, NFR-04 / 의존성: FE-T03, FE-T11~FE-T17
-- [x] Production 목록·상세·사이트맵·메타데이터에 draft와 fixture가 노출되지 않는지 검증한다. 현재 실제 공개 데이터가 없어 준비 안내와 빈 사이트맵을 확인했다.
+- [x] Production 목록·상세·사이트맵·메타데이터에 draft와 fixture가 노출되지 않는지 검증한다. 초기 빈 데이터 검증 이후 공개 지점 8곳을 반영했다. 이번 FE-T43에서는 지점 서버 조회의 공개 필드 제한과 공통 조회 경로를 재검증한다.
 - [x] 지점 검색+지역, 교육 분야+상태 필터 조합과 초기화를 순수 함수 fixture 테스트로 검증한다.
 - [x] URL 미확보·잘못된 URL·필수 정보 누락·운영 종료·모집 전/마감·기한 경과·교육 종료 CTA를 고정 시각 테스트로 검증한다.
 - [x] 자료 미확보와 확인된 빈 목록 규칙, 잘못된/미공개 상세 ID의 HTTP 404를 검증한다.
@@ -235,7 +261,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 
 - 우선순위: P0 / 요구사항: NFR-02, NFR-04, PRD §9 / 의존성: FE-T18~FE-T20
 - [x] 이번 개편에서 lint·타입 검사·콘텐츠 검증·상태 테스트·Production build를 실행해 통과했다.
-- [x] 최신 수정 `55a7765`의 Vercel Production build가 통과했고 `https://mayone-home.vercel.app/`이 HTTP 200으로 응답한다. Production에서 `#haru`·`#market`의 첫 이동과 같은 해시 재선택도 확인했다.
+- [x] 이전 체크포인트 `55a7765`의 Vercel Production build가 통과했고 `https://mayone-home.vercel.app/`이 HTTP 200으로 응답했다. Production에서 `#haru`·`#market`의 첫 이동과 같은 해시 재선택도 확인했다. 현재 배포 commit은 FE-T24에 기록한다.
 - [ ] `/salon`, `/haru/classes`, `/recruit`, `/haru/cooperation`, `/about` 및 상세 404를 release 배포에서 다시 확인하고 이미지·콘솔 오류를 점검한다.
 - [ ] 살롱·교육·채용·산학협력 경로의 준비 상태와 모든 활성 외부 CTA 목적지를 개편 이후 직접 확인한다. 메인 앵커 이동만 이번 회차에서 재검증했다.
 - [ ] 승인된 실제 공개 이미지로 모바일 Lighthouse를 측정하고 성능 90, 접근성·SEO 95 목표와 LCP·CLS 결과를 기록한다. 이미지·공식 도메인 확보 후 측정한다.
@@ -248,9 +274,9 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 
 - 우선순위: P0 / 요구사항: PRD §9, NFR-03 / 의존성: FE-T01, FE-T21
 - [x] 로컬 Git `main` 저장소를 만들고 테스트 배포 체크포인트와 롤백을 기록했다 (`73d032c`, `abc4449`).
-- [x] GitHub 원격 `https://github.com/TeusEE/mayone_web.git`에 `main`을 연결하고 최신 커밋 `55a7765`까지 push했다.
+- [x] GitHub 원격 `https://github.com/TeusEE/mayone_web.git`에 `main`을 연결하고 초기 배포 체크포인트 `55a7765`까지 push했다. 이후 Production source commit은 FE-T24에 기록한다.
 - [x] Vercel 프로젝트 `mayone-home`에 연결하고 루트·Next.js·Node.js 24·npm·`next build` 설정을 맞췄으며 Vercel 빌드가 통과했다.
-- [ ] Vercel Git 자동 연동과 Preview/Production 브랜치 규칙을 설정한다. 현재 Git push는 자동 배포를 시작하지 않아 CLI 배포를 사용한다. 별도 공식 도메인과 환경별 URL 설정도 남아 있다. 인증·Supabase 변수는 추가하지 않는다.
+- [ ] Vercel Git 자동 연동과 Preview/Production 브랜치 규칙을 설정한다. 현재 Git push는 자동 배포를 시작하지 않아 수동 배포를 사용한다. 별도 공식 도메인과 환경별 URL 설정도 남아 있다. Supabase Production 변수는 FE-T39에서 별도로 연결했다.
 - [x] Preview의 원본 카피·줄바꿈·검수 배너·noindex를 확인하고, 테스트 전용 원고를 제거한 롤백 Preview도 배포했다.
 - [x] 2026-09-28 Preview (`https://mayone-home-5q5h88phg-teus-ee-s-projects.vercel.app`, Deployment Protection 적용)에서 390px 모바일의 같은 `#haru`·`#market` 앵커 재선택과 1280px 데스크톱의 `#market` 재선택을 확인했다.
 - [ ] Preview의 모든 직접 URL·새로고침·404·이미지·모바일 키보드 메뉴·외부 링크 동작을 확인한다.
@@ -273,7 +299,8 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 
 - 우선순위: P0 / 요구사항: PRD §9, NFR-03·NFR-04 / 의존성: FE-T21~FE-T23
 - [x] Vercel 프로젝트 `mayone-home`를 생성하고 최초 Production 준비 페이지 `https://mayone-home.vercel.app`이 HTTP 200으로 응답하는지 확인한다.
-- [x] 반복 앵커 수정까지 포함한 최신 `main` 커밋 `55a7765`를 Production에 배포했다. 배포 `dpl_CRwnAfVEbT6hm61ecqWrwhTV5C8p`가 READY이며 `https://mayone-home.vercel.app`에서 HTTP 200을 확인했다.
+- [x] 현재 Production은 `main` 커밋 `f0e88bf`를 기준으로 배포되어 있다. Supabase Production 환경변수 적용을 위해 재배포한 `JCp31F1AyD48AafpxBZg8dEP3rSi`가 READY이며 `https://mayone-home.vercel.app`을 제공한다.
+- [x] 2026-10-02 운영 DB 연결 후 Production `/salon`을 다시 열어 공개 지점 8곳의 주소·운영 정보·네이버 예약 링크를 확인했다.
 - [x] 최신 Production에서 모바일 390×844 기준 `#haru`·`#market` 반복 앵커 이동과 메뉴 닫힘을 확인했다. 1280px 데스크톱의 `#market` 반복 이동은 Preview에서 확인했다.
 - [x] Preview에서 요청 문구·줄바꿈·검수 배너·검색 제외를 확인한 테스트 배포를 제거하고 테스트 전용 원고 노출을 롤백했다 (체크포인트 `73d032c`).
 - [x] 롤백 코드를 Preview에 배포해 준비 안내 상태를 확인했다. 이 URL은 Vercel Deployment Protection 로그인 뒤에 있다: https://mayone-home-9any3icds-teus-ee-s-projects.vercel.app
@@ -281,13 +308,13 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] Production에서 미확정 콘텐츠를 준비 상태로 유지하고 draft·fixture를 공개 조회에서 제외하는 기존 공개 규칙을 콘텐츠 검증과 Production 확인으로 재검증했다.
 - [ ] 주요 페이지의 직접 URL·404·이미지·모바일 키보드 메뉴·모든 외부 링크를 확인한다. 이번 배포에서는 메인 반복 앵커 여정만 재검증했다.
 - [ ] 콘텐츠 수정→검증→Preview→재배포, 모집 상태·기한 변경, 외부 링크 재확인, 이전 정상 배포로 복구하는 절차를 기록한다.
-- [x] 배포 URL·최신 커밋·배포 ID와 남은 자료 공백을 이 작업 목록에 기록했다. 후속 인증은 미구현 상태다.
+- [x] 배포 URL·커밋·배포 ID와 남은 자료 공백을 기록했다. 이 배포 기록은 관리자 Auth 적용 전 체크포인트이며, 현재 Auth 코드와 운영 배포 대기는 FE-T40에서 관리한다.
 - [ ] 실제 운영 담당자와 업데이트·복구 절차를 확정한다.
 - 완료 기준: 초기 브랜드 사이트가 공식 주소에서 정상 제공되고 운영자가 콘텐츠를 갱신·재배포·복구할 수 있다.
 
 ## 8. 운영 자료 확보 현황
 
-이 표의 항목은 구현 작업과 별도로 관리한다. 2026-09-28 기준 상태를 반영하며, 적용 완료와 실제 운영 목적지 검증은 구분한다.
+이 표의 항목은 구현 작업과 별도로 관리한다. 2026-10-02 기준 상태를 반영하며, 적용 완료와 실제 운영 목적지 검증은 구분한다.
 
 | ID | 필요한 자료 | 현재 상태 | 확보 담당 역할 | 공개 조건 / 관련 작업 |
 | --- | --- | --- | --- | --- |
@@ -314,7 +341,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] 원본 HTML의 9개 구역, 시스템 5개, 교육 원칙 4개·기본 분야 5개, 생태계 카드 3개를 구현하고 핵심 앵커 이동을 검증했다.
 - [x] 필수 목록·상세·404·자료 준비·빈 결과·마감·오류 상태를 구현하고 중요 상태 규칙 테스트와 Production build를 통과했다.
 - [ ] 모든 주요 폭·키보드·reduced-motion·실제 이미지 QA를 마친다. 모바일 반복 앵커와 320/375/390px 좌우 여백은 확인했다.
-- [x] 현재 범위에는 인증·Supabase·실제 신청 처리·결제가 포함되지 않는다. 테스트 값의 개발 전용 CSV 저장 시연은 FE-T25~FE-T30에서 별도로 구현한다.
+- [x] 관리자 Auth와 Supabase 저장을 FE-T39~FE-T40에서 추가했다. mock 시연은 구현되어 있으나 실제 비회원 신청·JWT/RLS는 FE-T41~FE-T42 대기이고 결제·일반 회원 기능은 범위 밖이다.
 
 ### 9.2 초기 브랜드 공개
 
@@ -339,16 +366,17 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 | ID | 예정 사항 | 현재 처리 |
 | --- | --- | --- |
 | FUTURE-01 | 카카오·네이버 회원가입·로그인 | 공급자 지원 방식·제품 요구사항 확정 후 별도 PRD/작업으로 전환 |
-| FUTURE-02 | Supabase Auth·Storage·회원 모델 | 테스트 DB 연결과 환경 분리 구조는 FE-T39에서 구현했다. 운영 DB 연결은 별도 프로젝트 설정이 필요하며, 로그인·회원 데이터·Storage는 별도 요구사항과 접근 정책을 확정한 뒤 검토 |
+| FUTURE-02 | 일반 사용자용 Supabase Auth·Storage·회원 모델 | 이번 범위에는 초대 관리자 Auth만 포함한다. 일반 회원 계정·Storage는 별도 제품 요구가 생길 때 검토 |
 | FUTURE-03 | 세션·마이페이지·회원 전용 권한·신청 이력 | 인증과 실제 회원 기능 범위가 확정된 뒤 설계 |
-| FUTURE-04 | 실제 교육 신청 저장·입사지원·산학협력 접수 | CSV mock 시연과 별개로, Supabase 등 저장·전달·개인정보 처리·접수 절차를 확정한 뒤 구현 |
+| FUTURE-04 | 입사 지원·산학협력 자체 접수 | 수강 신청은 FE-T42에서 다룬다. 채용·산학협력은 별도의 저장·전달·개인정보 처리 절차를 확정한 뒤 구현 |
 | FUTURE-05 | CMS·실시간 모집·지도·분석·후기 확장 | 운영 필요와 데이터 확보 이후 별도 범위로 검토 |
+| FUTURE-06 | 추가 관리자 역할·감사 범위 | 기본 관리자 인증·운영 CRUD와 신청자 접근은 FE-T40~FE-T42에 포함한다. 세분화된 역할이나 상세 감사 이력이 필요해지면 별도 작업으로 확장한다. |
 
-인증을 미리 준비한다는 이유로 빈 로그인 화면, 콜백 라우트, 회원 fixture, 사용하지 않는 provider, Supabase 클라이언트를 추가하지 않는다.
+일반 사용자 계정과 소셜 provider는 만들지 않는다. 관리자는 FE-T40에서 실제 Supabase Auth와 서버 측 권한 검사를 구현하며, 빈 로그인 화면이나 회원 fixture로 대신하지 않는다.
 
 ## 11. F단계 — HARU 수강 신청 시연
 
-> 범위: 공식 교육 일정·실제 접수 수단이 아직 없으므로 mock 과정으로 시연한다. 테스트용 임의 값은 로컬 개발 환경에서만 Git에 포함되지 않는 CSV로 기록하며, 실제 수강 신청은 받지 않는다.
+> 범위: 공식 교육 일정·실제 접수 수단이 없으므로 mock 과정으로 시연한다. FE-T25~FE-T38은 최초 로컬 구현 기록이다. 이후 FE-T39에서 테스트 Supabase 저장, FE-T40에서 관리자 Auth를 추가했으며 현재는 아래 항목에도 그 변경을 반영한다. 테스트 데이터는 개발/Preview의 테스트 Supabase 또는 개발 전용 파일에만 저장하며 실제 접수는 받지 않는다.
 
 ### FE-T25. CSV mock 과정 카탈로그
 
@@ -356,7 +384,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] `src/content/fixtures/class-offers.csv`에 실제 교육으로 오인되지 않는 mock 과정/회차 행을 준비한다.
 - [x] 각 행에 ID, 과정명, 분야, mock 강사 표기, 소개, 대상, 시작·종료 일시와 시간대, 장소, 원화 교육비, 준비물, 모집 상태, 신청 마감일, mock 식별값을 둔다. 회차/과정 행은 하나의 신청 단위다.
 - [x] 서버 전용 조회·CSV 파싱과 필수값, 고유 ID, 분야, 상태, 날짜·시간대, 금액, 마감일 검증을 추가한다. 지원자 입력 데이터를 이 파일에 쓰지 않는다.
-- [x] fixture 경로가 Production 콘텐츠 조회·클라이언트 번들·sitemap·검색 결과에 포함되지 않도록 분리한다. Supabase SDK·키·테이블은 추가하지 않는다.
+- [x] fixture 경로가 Production 콘텐츠 조회·클라이언트 전달·sitemap에 포함되지 않도록 분리한다. 테스트 DB 저장소는 FE-T39, 관리자 인증은 FE-T40으로 연결하며 mock 모델의 실제 과정 전환은 FE-T42로 분리한다.
 - 완료 기준: mock CSV를 읽고 검증할 수 있고 오류가 있는 행은 신청 UI에 노출되지 않는다. 실제 공개 강의 데이터와 섞이지 않는다.
 
 ### FE-T26. `/haru/apply` 과정 선택과 입력 UI
@@ -366,16 +394,16 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] `?classId=...`가 있으면 일치하는 모집 중 mock 과정/회차를 미리 선택한다. 누락·잘못된 ID·모집 예정·마감·종료 과정은 선택과 제출을 허용하지 않는다.
 - [x] 필수 항목은 과정/회차·신청자 이름·휴대전화로 두고, 매장명·경력·문의는 선택 입력으로 제공한다. 이름 있는 label, 형식 검증, 입력 옆 오류와 키보드 접근을 구현한다.
 - [x] 실제 개인정보가 아닌 테스트용 임의 값을 입력하도록 화면 상단과 제출 전에 안내하고, `실제 개인정보가 아닌 테스트용 임의 값만 입력했습니다` 확인 항목을 둔다.
-- [x] 개발 환경에서는 서버 저장 후 입력값을 지우고, Preview에서는 파일 저장을 지원하지 않음을 표시한다. 결과 문구는 CSV 테스트 저장과 실제 수강 신청 접수를 구분한다.
+- [x] 서버 저장 후 입력값을 지운다. Preview는 테스트 Supabase 설정 시에만 제출 가능하고 로컬 파일 fallback은 비활성이다. 결과 문구는 Supabase/CSV 테스트 저장과 실제 수강 신청 접수를 구분한다.
 - 완료 기준: 개발/Preview mock UI의 입력 단계가 키보드·모바일에서 동작하고, 로컬 개발에서는 FE-T30의 CSV 저장으로 이어진다.
 
 ### FE-T27. 신청 CTA 연결·환경 게이트·회귀 검증
 
 - 우선순위: P0 / 요구사항: FE-04, FE-09, NFR-02·NFR-03 / 의존성: FE-T25, FE-T26
 - [x] 메인 HARU CTA는 `/haru/classes`로 연결하고, 개발/Preview 과정별 신청 버튼은 선택 과정 ID와 함께 `/haru/apply?classId=...`로 이동한다. ID 없이 직접 접근하면 과정 선택부터 시작한다.
-- [x] Production은 mock CSV와 입력 폼을 제공하지 않고 실제 교육 자료가 없으면 준비 상태를 표시한다. Preview에는 시연 전용 배너와 `noindex, nofollow`를 적용했다. Production output trace에서 CSV 제외, mock 상세 404, 메인 CTA 비활성을 확인했다.
+- [x] Production은 mock CSV와 입력 폼을 제공하지 않고 실제 교육 자료가 없으면 준비 상태를 표시한다. Preview에는 시연 전용 배너와 `noindex, nofollow`를 적용했다. Production output trace에서 CSV 제외와 mock 상세 404를 확인했다. 메인 HARU CTA는 항상 교육 목록으로 연결하고 실제 신청은 자료 준비 상태로 둔다.
 - [x] CSV 파싱·과정 상태·신청 마감 시각 경계·필드 검증·모집 불가 과정 차단을 자동 테스트하고, Preview/Production의 mock 비노출을 검증했다.
-- [x] Preview에서는 로컬 파일 저장이 불가능함을 안내하고 제출 버튼을 비활성화한다. Production은 신청 폼과 저장 API를 제공하지 않는다.
+- [x] Preview는 테스트 DB가 없으면 제출 버튼을 비활성화하고 파일 저장을 거절한다. Production은 mock 신청 폼을 숨기고 POST API는 404를 반환한다.
 - [x] Playwright에서 신청·목록·상세 경로를 320·375·390·768·1024·1440px로 확인해 가로 넘침이 없고, 키보드 과정 선택, 오류·완료 안내가 동작하는지 확인했다. 브라우저 콘솔 오류는 발생하지 않았다.
 - 완료 기준: 테스트 경로가 MAY.ONE 디자인으로 동작하고 Production은 실제 과정·개인정보 안내·저장 수단이 마련되기 전 접수를 받지 않는다.
 
@@ -413,40 +441,40 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 
 - 우선순위: P0 / 요구사항: FE-04, NFR-01·NFR-02·NFR-03 / 의존성: FE-T30
 - [x] `/admin/enrollments`에서 CSV를 서버 전용으로 읽어 제출 시각·과정·이름·휴대전화·선택 입력·테스트 확인 상태를 최신순으로 표시한다. 빈 목록과 파일 오류 상태를 구분한다.
-- [x] 관리자 조회는 `NODE_ENV=development`와 `localhost`·loopback Host에서만 허용한다. 공개 메뉴·CSV 다운로드/조회 API를 만들지 않고 `noindex, nofollow`를 설정한다. Preview·Production은 페이지를 404 처리한다.
-- [x] 모바일에서도 신청자 카드와 문의가 읽히도록 구성하고 개인정보 테스트 자료임을 화면에 표시한다. 실제 운영 관리자 인증은 Supabase 연동 범위에서 다룬다.
+- [x] FE-T40 이후 관리자 조회는 모든 환경에서 서버 Auth·이메일 허용 목록으로 보호한다. 로컬 파일 읽기는 개발 전용이고 파일 쓰기는 loopback Host도 확인한다. 공개 메뉴·CSV 다운로드/조회 API를 만들지 않고 `noindex, nofollow`를 유지한다. 운영 변경과 실제 신청 관리는 FE-T41~T42 검증 전까지 닫는다.
+- [x] 모바일에서도 신청자 카드와 문의가 읽히도록 구성하고 개인정보 테스트 자료임을 화면에 표시한다. 현재 관리자 인증은 FE-T40의 Supabase Auth와 서버 허용 목록을 사용한다.
 - [x] CSV 파서 왕복·잘못된 헤더·빈 파일·Host 허용/차단을 자동 테스트하고, Playwright로 로컬 제출 결과가 관리자 화면에 나타나는지 확인한다.
-- 완료 기준: 가짜 테스트 신청 제출 후 새로고침하면 신청자 정보가 관리자 화면에 보이고, loopback 외 환경과 Preview·Production에는 노출되지 않는다.
+- 완료 기준: 가짜 테스트 신청이 허용된 관리자에게만 표시되고 비관리자는 페이지/API를 사용할 수 없다. 로컬 파일은 개발 환경에서만 읽고 Preview·Production에서 파일 쓰기는 거절한다.
 
 ### FE-T32. 로컬 관리자 신청자 수정·삭제
 
 - 우선순위: P1 / 요구사항: FE-04, NFR-01·NFR-02·NFR-03 / 의존성: FE-T30, FE-T31
 - [x] 관리자 카드에서 이름·휴대전화·근무 매장·경력·문의사항을 편집하고 서버 검증 후 CSV에 저장한다. 과정과 최초 제출 시각은 유지한다.
 - [x] 삭제 전 확인을 받고, 선택한 신청 행만 제거한다. 빈 목록과 다른 행의 데이터는 유지한다.
-- [x] 수정·삭제 API는 개발 모드, loopback Host, 같은 출처 요청에서만 허용한다. CSV 조회 API는 추가하지 않는다.
+- [x] 수정·삭제 API는 관리자 Auth·이메일 허용 목록과 같은 출처 검사를 거친다. 파일 fallback은 개발 모드·loopback Host만 허용하고 Production 변경은 차단한다. CSV 조회 API는 추가하지 않는다.
 - [x] CSV 갱신은 임시 파일 기록 후 원자적으로 교체하고, 동시 append/update/delete를 파일별 큐로 직렬화한다. 잘못된 스키마·없는 ID는 파일을 덮어쓰지 않는다.
 - [x] CSV 저장 단위 테스트와 Playwright 실 편집·삭제를 확인한다. 검증용 추가 행은 삭제하고, 기존 테스트 행은 처음 값으로 복구한다.
-- 완료 기준: 관리자에서 입력값을 수정하면 새로고침 후 반영되고, 확인을 거친 삭제는 해당 행만 지우며 잘못된 값·원격 Host·비개발 환경 요청은 거절한다.
+- 완료 기준: 관리자에서 입력값을 수정하면 새로고침 후 반영되고, 확인을 거친 삭제는 해당 행만 지운다. 잘못된 값·비관리자·Production 변경과 원격 Host의 파일 쓰기는 거절한다.
 
 ### FE-T33. 로컬 관리자 홈과 메뉴 연결
 
 - 우선순위: P1 / 요구사항: FE-04, NFR-01·NFR-02·NFR-03 / 의존성: FE-T31~FE-T32
 - [x] `/admin`에 로컬 테스트 전용 안내와 관리 메뉴를 만들고, 신청자 확인·수강 과목 관리 화면으로 연결한다.
-- [x] 메뉴 카드에 신청자와 과정 수를 표시하고, 관리자 내부 공통 메뉴로 세 화면 사이를 이동할 수 있게 한다. 공개 사이트 내비게이션에는 관리자 링크를 추가하지 않는다.
-- [x] `/admin`과 하위 화면은 개발 모드 및 loopback Host에서만 열고 `noindex, nofollow`를 설정한다. Preview·Production에서는 404 처리한다.
+- [x] 메뉴 카드에 신청자와 과정 수를 표시하고, 관리자 내부 공통 메뉴로 홈·신청자·과목·지점 화면 사이를 이동할 수 있게 한다. 공개 사이트 내비게이션에는 관리자 링크를 추가하지 않는다.
+- [x] `/admin`과 하위 화면은 FE-T40의 관리자 인증으로 보호하고 `noindex, nofollow`를 유지한다. 미인증 사용자는 로그인으로 이동한다. Production 변경 허용은 FE-T41의 migration·배포 적용 후 활성화된다.
 - [x] Playwright로 관리자 홈 메뉴와 신청자 화면 이동을 확인한다.
-- 완료 기준: `/admin`에서 신청자 조회 화면으로 이동할 수 있고, 개발 서버가 아닌 환경에서는 관리자 화면이 노출되지 않는다.
+- 완료 기준: `/admin`에서 신청자 조회 화면으로 이동할 수 있고, 허용된 관리자 이외에는 화면·데이터가 노출되지 않는다.
 
 ### FE-T34. 로컬 mock 수강 과목 관리
 
 - 우선순위: P1 / 요구사항: FE-04, NFR-01·NFR-02·NFR-03 / 의존성: FE-T25~FE-T31, FE-T33
 - [x] `/admin/classes`에서 분야·소개·강사·대상·일정·신청 마감·모집 상태·장소·교육비·준비물을 포함해 mock 과목을 추가·수정·삭제한다.
 - [x] 과목 카탈로그는 `.local-data/mock-class-offers.csv`에 저장하고, 파일이 없으면 checked-in fixture를 기본 목록으로 쓴다. 로컬 변경을 Git에 포함하지 않는다.
-- [x] 서버에서 과목 필드·한국 시간대·모집 상태·날짜 관계를 다시 검증하고, loopback Host와 같은 출처의 개발 요청만 처리한다. CSV 파일의 정식 다운로드·조회 API는 제공하지 않는다.
+- [x] 서버에서 과목 필드·한국 시간대·모집 상태·날짜 관계를 검증하고 관리자 Auth·같은 출처 요청만 처리한다. Supabase는 테스트 환경만 변경하고 파일 fallback은 개발 모드·loopback Host로 제한한다. CSV 파일의 정식 다운로드·조회 API는 제공하지 않는다.
 - [x] 원자적 파일 교체와 동시 쓰기 직렬화를 적용하며, 잘못된 카탈로그가 있으면 기존 데이터를 덮어쓰지 않는다.
 - [x] 변경된 과정이 교육 일정 목록과 해당 과정의 신청 화면·신청 검증에 반영되는지 Playwright로 추가·수정·삭제 흐름을 확인한다. 테스트 과목은 끝에 제거한다.
 - [x] CSV 파서·직렬화·입력 검증·저장소 추가/수정/삭제·동시 갱신·오류 파일 보존 테스트를 실행한다.
-- 완료 기준: 로컬 관리자가 과목을 추가·수정·삭제하면 교육 목록과 신청 흐름이 같은 카탈로그를 사용하고, Preview·Production 또는 loopback 외 요청은 변경할 수 없다.
+- 완료 기준: 로컬 관리자가 과목을 추가·수정·삭제하면 교육 목록과 신청 흐름이 같은 카탈로그를 사용하고, 비관리자·Production 변경과 loopback 외 파일 쓰기를 차단한다. 테스트 DB가 설정된 인증 Preview는 테스트 변경을 사용할 수 있다.
 
 ### FE-T35. 과정별 신청자 그룹 조회
 
@@ -481,12 +509,14 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] `/admin/branches`에 지점 목록과 지점 추가·수정·삭제 화면을 만들고, 공개/초안 및 운영 상태를 관리한다.
 - [x] 기존 `src/content/branches.ts` 자료로 시작하고 로컬 변경은 Git에 포함하지 않는 `.local-data/branches.json`에 저장한다. 지점 ID는 생성 후 변경할 수 없게 한다.
 - [x] 지점명·지역·주소·운영 여부, 운영시간·휴무·전화·찾아오는 길·주차·매장정보, 예약 URL과 내부 참고용 플레이스 URL을 편집한다. 공개 상태는 지역·주소·확인된 운영 상태와 함께 서버에서 검증한다.
-- [x] 개발 환경의 `/salon`은 공개·검토 완료된 로컬 지점 사본을 사용한다. Production과 Preview에는 관리자 변경을 노출하지 않고 체크인된 원본 지점 자료를 유지한다.
-- [x] 관리자 페이지와 변경 API를 개발 모드·loopback Host·같은 출처 요청으로 제한하고, 잘못된 JSON을 발견하면 기존 파일을 덮어쓰지 않는다.
+- [x] Supabase 미설정 개발 환경의 `/salon`은 공개·검토 완료된 로컬 지점 사본을 사용한다. Supabase 설정 환경은 같은 환경의 공개 지점 조회를 사용한다. 설정 없는 Preview/Production은 체크인 원본을 유지하고, 로컬 파일은 개발에서만 사용한다. Production 변경은 차단한다.
+- [x] 관리자 페이지·API를 FE-T40의 Auth·허용 목록으로 보호하고 파일 쓰기는 개발 모드·loopback Host·같은 출처 요청으로 제한한다. 또한 잘못된 JSON을 발견하면 기존 파일을 덮어쓰지 않는다.
 - [x] 자동 테스트에서 입력·URL·공개 필수값 검증, 원본 fallback, JSON 추가·수정·삭제, 동시 저장 및 손상된 파일 보존을 확인하고 Playwright에서 관리자 메뉴와 공개 지점 목록 반영을 검증한다.
-- 완료 기준: 로컬 관리자가 지점 정보를 안전하게 추가·수정·삭제하고 공개 상태를 바꾸면 개발 지점 페이지에 반영되며, Preview·Production과 원격 Host는 지점 정보를 변경하거나 로컬 사본을 제공하지 않는다.
+- 완료 기준: 로컬 관리자가 지점 정보를 안전하게 추가·수정·삭제하고 공개 상태를 바꾸면 개발 지점 페이지에 반영된다. 인증된 테스트 DB 환경은 지점 CRUD를 사용할 수 있고 Production 변경과 원격 Host의 로컬 파일 쓰기는 거절한다.
 
-### FE-T39. Supabase 관리 데이터 저장소 전환
+## 12. G단계 — Supabase 데이터 환경 분리
+
+### FE-T39. Supabase 관리 데이터 저장소와 환경 연결
 
 - 우선순위: P1 / 요구사항: FE-03, FE-04, NFR-04 / 의존성: FE-T31~FE-T38
 - [x] `mayone_branches`, `mayone_class_offers`, `mayone_enrollments` 테이블용 SQL migration을 추가하고, 세 테이블에 RLS를 활성화한다. `public`, `anon`, `authenticated` 권한을 회수하고 server role만 CRUD 권한을 갖게 한다.
@@ -497,6 +527,82 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] `https://vmhydtjwvfyedxfloqhn.supabase.co` 프로젝트에 migration을 적용하고, 세 테이블의 RLS 활성화와 `anon`·`authenticated` SELECT 권한 차단을 확인한다.
 - [x] `.env.local`에 project URL/Secret key를 설정하고 기존 데이터 가져오기를 실행한다. 배포 환경에서 쓸 때는 Vercel server environment에도 비밀값을 별도로 설정한다.
 - [x] 체크인·로컬 변경 데이터를 가져온 뒤 실제 Supabase에서 지점·과정·신청 데이터를 조회하고 각 테이블의 추가·수정·삭제를 확인한다. 가져온 8건의 테스트 신청은 모두 테스트 데이터 확인 상태이며 로컬 원본도 유지한다.
-- [x] `.env.local`과 Vercel Preview는 `SUPABASE_DATA_TARGET=test`, Vercel Production은 `production` target만 허용한다. 런타임에서 target과 Vercel environment가 맞지 않으면 연결을 거부하고, 로컬 데이터 import는 test target에서만 실행한다.
-- [ ] 별도 운영 Supabase 프로젝트의 URL·Secret key를 Vercel Production 환경변수에 설정하고 target을 `production`으로 지정한다. 운영 프로젝트에 migration을 적용하고 공개할 지점·과정 자료만 준비해 테스트 신청 데이터가 없는지 검증한다.
-- 완료 기준: 비운영 앱 환경에서 지점·과정·테스트 신청 데이터가 Supabase와 일치하고, 비밀 key는 서버 밖으로 노출되지 않는다. 실제 DB migration/import와 UI 검증이 끝나기 전에는 이 task를 완료 처리하지 않는다.
+- [x] `.env.local`에서 테스트 프로젝트 `https://vmhydtjwvfyedxfloqhn.supabase.co`와 `SUPABASE_DATA_TARGET=test`를 사용한다. 테스트 DB의 기존 자료 가져오기와 실제 CRUD 검증을 마쳤다.
+- [x] Vercel Production에 운영 프로젝트 `https://nskeltlthbqlxxaubbom.supabase.co`의 `SUPABASE_URL`·`SUPABASE_SECRET_KEY`·`SUPABASE_DATA_TARGET=production`을 Production 범위로 설정했다. 비밀값은 문서·Git에 기록하지 않는다.
+- [x] 운영 프로젝트에 schema migration과 RLS 권한 제한을 적용했다. `mayone_branches`에 공개·확인된 기존 지점 8곳만 넣고 Production `/salon`에서 표시를 확인했다. 테스트 강의와 테스트 신청자는 가져오지 않았고 `mayone_class_offers`, `mayone_enrollments`는 비워 두었다.
+- [x] Vercel Production 재배포 `JCp31F1AyD48AafpxBZg8dEP3rSi`가 `Ready`이며, 운영 지점 페이지에서 Supabase 데이터 조회를 확인했다.
+- [ ] Vercel Preview에는 현재 Supabase 환경변수가 없다. Preview에서도 테스트 Supabase CRUD를 검증할 필요가 있으면 테스트 URL·Secret key·`SUPABASE_DATA_TARGET=test`를 Preview 범위로 등록하고 격리를 확인한다.
+- 완료 기준: 로컬 테스트 DB CRUD와 Production 운영 DB 조회가 각각 확인되고, Production에 테스트 신청 자료가 없으며, 비밀 key가 서버 밖으로 노출되지 않는다. 현재 모든 RLS-enabled 테이블을 서버 Secret key만 쓰는 초기 정책은 FE-T41에서 공개·관리자 접근 정책으로 교체한다. Vercel Preview 테스트 DB 사용은 별도 설정·검증 전까지 완료로 표시하지 않는다.
+
+## 13. H단계 — 관리자 권한과 비회원 수강 신청
+
+### FE-T40. 관리자 이메일 로그인과 접근 검사
+
+- 우선순위: P0 / 요구사항: PRD NFR-05 / 의존성: FE-T39
+- [x] 테스트·운영 Supabase에서 일반 Auth 가입을 끈다. 관리자 초대는 승인된 이메일에만 개별적으로 보내고 계정 공유는 금지한다.
+- [x] 운영 첫 관리자 Auth 계정을 사용자 승인 후 초대했다. 2026-10-04 Dashboard 초대 요청이 정상 처리되고 계정이 `Waiting for verification` 상태로 생성됐다. Vercel 이메일 허용 목록 등록과 Auth 사용자 생성은 별도 작업이며, 기존 초대 완료 문구를 정정했다.
+- [x] 2026-10-04 사용자 승인을 받아 `dslee1311@naver.com`, `jjcoin2@gmail.com`을 Production `ADMIN_EMAIL_ALLOWLIST`에 추가하고 기존 항목을 보존했다. Vercel 배포 `dpl_diPb9vn85h4NmLJyzk6rQxn67ZKk`가 Ready로 운영 도메인에 연결됐다.
+- [x] Supabase Auth가 `dslee1311@naver.com` 초대 요청을 200으로 처리했고 Dashboard에 발송 완료 알림이 표시됐다. 받은편지함 수신은 별도 확인이 필요하다.
+- [ ] `jjcoin2@gmail.com` 초대 요청은 2026-10-04 20:05 KST `429 email rate limit exceeded`로 거부됐다. 제한 해제 후 초대 요청을 재시도하고 실제 수신·비밀번호 설정을 확인한다.
+- [ ] 운영 초대 메일의 실제 수신과 관리자의 직접 초기 비밀번호 설정을 확인한다. 발송 요청 처리와 수신 완료를 구분한다.
+- [x] 로컬 테스트와 Vercel Production의 브라우저/SSR Auth용 publishable key와 URL을 환경변수로 설정하고 Secret key와 분리한다. 값은 문서나 Git에 쓰지 않는다. Vercel Preview 변수는 아직 없으며 Preview 관리자 검증 전 설정한다.
+- [x] 로컬·Preview는 서버 전용 `ADMIN_EMAIL_ALLOWLIST`, Production은 `mayone_admin_emails` 서버 조회를 허용 기준으로 사용하도록 코드를 준비한다. Production의 같은 이메일 기준을 RLS helper도 확인하고, 관리 콘텐츠 변경은 사용자 JWT를 사용한다. migration 적용과 운영 배포·검증은 FE-T41의 미완료 항목으로 둔다. 이전 `mayone_admin_users` 테이블은 앱 권한 검사에서 사용하지 않는다.
+- [x] `/admin/login`과 `/api/admin/auth/[action]`에서 이메일·비밀번호 로그인, 복구 메일 요청, 비밀번호 저장, 로그아웃을 구현한다. 같은 출처 JSON·본문 제한을 검사하고 로그인/세션 교환·비밀번호 저장 전 서버 `getUser()`와 허용 목록을 확인한다. 세션은 HttpOnly cookie에 저장하고 JSON 응답·브라우저 저장소에는 토큰을 전달하지 않는다.
+- [x] PKCE code·invite/recovery token hash·기존 implicit fragment 초대/복구 콜백을 처리한다. `/admin/auth-link`에서 fragment를 지우고 서버 세션으로 교환하며 이미 로그인된 브라우저에서도 링크를 먼저 처리한다. 실패·만료 시 설정 메일 재요청 안내를 제공한다.
+- [x] Dashboard 초대가 기본 Site URL인 `/`로 돌아와도 인증 fragment를 처리한다. 일반 홈페이지 섹션 anchor는 유지하고 인증 fragment만 서버 세션으로 교환한다. 최초 진입과 같은 페이지의 hash 변경을 처리하며 운영 배포 `dpl_3V8qy1s6YbqdNYJMME6DUSM4VaTw`에서 일반 앵커 유지·만료 링크 안내 이동을 확인했다.
+- [x] 로그인 후 처음 요청한 관리자 화면으로 복귀한다. 외부 주소·알 수 없는 경로는 `/admin`으로 제한한다. 관리자 메뉴에 현재 이메일, 현재 메뉴 표시, 비밀번호 설정, 로그아웃을 제공한다. 비밀번호 저장은 폼과 서버에서 12~128자·확인 일치를 검사한다. TOTP 2단계 인증은 요구하지 않는다.
+- [x] 복구 메일은 허용 이메일에만 요청하고 등록 여부를 구분하지 않는 안내를 사용한다. 비관리자 이메일의 로그인은 자격 증명 오류와 같은 안내를 사용하며 허용 목록에서 제거된 계정도 로그아웃할 수 있다.
+- [x] Next.js 16 SSR cookie 세션 갱신과 `requireAdminPage` / `checkAdminApiRequest`를 구성했다. 보호된 `/admin` layout/page와 지점·과목·신청자 변경 Route Handler 각각에서 검사한다. Proxy는 세션 갱신과 내부 복귀 경로 전달에 사용하고 권한 승인에는 사용하지 않는다. SSR `setAll`의 cookie와 캐시 금지 헤더를 응답에 함께 반영한다.
+- [x] 공개 페이지·비회원 신청 POST에는 관리자 로그인을 요구하지 않는다. `/admin`은 공개 헤더/사이트맵에서 제외하고 `noindex`를 유지한다.
+- [x] 자동 권한 상태 테스트에서 비로그인·허용되지 않은 이메일·대소문자 정규화·허용 관리자·이메일 없음·빈 허용 목록 상태를 확인한다. API가 중앙 보호 검사를 호출하는 것도 확인했다.
+- [x] Production 빌드 서버와 Playwright에서 비회원 `/`, `/salon`, `/haru/classes`, `/haru/apply`는 로그인 없이 열리고 `/admin`은 로그인으로 이동하며, 로그인 폼이 회원가입을 제공하지 않음을 확인했다. 지점·과목·신청자 변경 API는 미인증 요청에 `401`을 반환한다.
+- [x] 테스트 Supabase에 첫 관리자를 초대했고 초대/복구 링크가 로컬 `/admin/complete-invite`로 이동하는 브라우저 흐름을 확인했다. 비밀번호는 관리자가 직접 입력한다.
+- [x] 2026-10-04 후속 구현에서 로컬 대체 Auth·실제 Next 서버의 34개 HTTP 확인과 Chrome 로그인 오류→성공→원래 화면 복귀, 계정 메뉴, 로그아웃, 기존 로그인 중 복구 fragment 처리를 확인했다. 실제 메일·계정 변경 없이 검사했으며 상세 기록은 [project-audit.md](./project-audit.md)에 남긴다.
+- [ ] 관리자가 직접 비밀번호를 설정한 뒤 이메일·비밀번호 로그인·로그아웃·허용 해제·세션 만료를 브라우저에서 확인한다.
+- [x] 운영 관리자 이메일 `dslee1311@naver.com`, `jjcoin2@gmail.com`을 확정해 Vercel Production 허용 목록에 추가했다. 두 이메일은 Auth 초대 전 존재하지 않았음을 확인했다.
+- [x] 2026-10-04 현재 승인 이메일을 Vercel Production의 서버 전용 Secret `ADMIN_EMAIL_ALLOWLIST`에 등록하고 최신 Auth 코드를 배포했다. 배포 `dpl_75nC8mVyjGSeUaXKRyHr13Q8c4eH`가 Ready이며 `https://mayone-home.vercel.app`에 연결됐다. `/admin/login`과 공개 페이지, 미인증 관리자 이동·API 거절 등 14개 운영 HTTP 확인이 통과했다. 실제 계정 비밀번호·로그인 검증은 위 미완료 항목으로 유지한다.
+- 완료 기준: 허용된 이메일의 개별 Supabase Auth 계정만 이메일·비밀번호 로그인으로 관리자 화면과 쓰기 기능을 사용할 수 있고, 공개 페이지와 비회원 신청은 로그인 없이 유지된다.
+
+### FE-T41. 방문자·관리자 DB 권한 및 RLS 분리
+
+- 우선순위: P0 / 요구사항: FE-03·FE-04·FE-09, NFR-05 / 의존성: FE-T40
+- [x] Production 허용 이메일 테이블 `mayone_admin_emails`와 고정 `search_path`의 `private.is_mayone_admin()` helper를 정의하는 신규 migration을 추가한다. 승인된 `xodn1311@naver.com`, `dslee1311@naver.com`, `jjcoin2@gmail.com`을 초기 허용 목록에 넣고 지점·운영 과정에 관리자 JWT의 SELECT/INSERT/UPDATE만 허용하도록 준비한다. `mayone_enrollments`에는 authenticated 권한과 정책을 주지 않는다.
+- [x] Production 이메일 권한 검사를 DB 허용 목록으로 전환하고, 지점·운영 과정 추가/수정은 Auth 사용자 JWT를 전달해 RLS를 통과하도록 연결한다. 운영 과정은 `AcademyClass` 모델로 저장·조회하며 공개·검토 완료 항목만 사이트에 전달한다. 관리자 지점·과정 화면은 삭제를 제공하지 않고 신청자/mock 변경 API는 계속 차단한다.
+- [ ] Migration을 운영 Supabase에 적용한 뒤 허용 관리자 로그인, 비관리자 거부, 지점·과정 추가/수정, 삭제·신청 테이블 거부를 확인한다. 이후 Production 배포와 관리자 UI 실사용을 검증한다. 운영 DB migration은 아직 적용하지 않았다.
+- [ ] 비회원 `anon`은 공개 상태 데이터를 읽게 하고, 관리자 세션이 있는 `authenticated` 요청에도 같은 공개 조회 정책을 적용한다. 공개되지 않은 행과 내부 관리 필드는 응답에 포함하지 않는다.
+- [ ] 공개 필드는 RLS만으로 제한할 수 없으므로 공개용 안전 projection을 추가하고 내부 필드가 PostgREST 응답에 나타나지 않는지 확인한다. 현재 `data`는 JSONB 한 컬럼이므로 컬럼 SELECT grants만으로 내부 키를 숨길 수 없다. 공개 view/RPC 등의 명시적인 필드 선택과 원본 테이블 접근 제한을 함께 검증한다.
+- [ ] `mayone_enrollments`의 직접 anon 조회·입력·수정·삭제를 차단한다. 허용되지 않은 authenticated 사용자도 신청자 개인정보나 관리 데이터에 접근하지 못하게 한다.
+- [ ] Supabase Auth 계정의 허용 이메일을 DB 목록에서 회수하고 다음 요청부터 로그인·RLS 쓰기를 거부하는 운영 회수 절차를 확인한다. `mayone_admin_emails`가 앱과 RLS의 공통 권한 기준이며 사용자 콘텐츠 변경 경로에서 `SUPABASE_SECRET_KEY`를 사용하지 않는지 Production에서 검증한다.
+- [ ] 허용 목록 자체는 Data API에서 공개하지 않는다. RLS helper를 쓰면 고정된 `search_path`, 최소 실행 권한 등 안전 설정을 검증한다.
+- [ ] SQL/통합 검증에서 공개 데이터 보호, Draft 비공개, 신청자 테이블 직접 접근 거부, 비관리자 CRUD 거부, 허용 관리자 추가/수정 허용, 허용 목록 회수 후 거부를 각각 확인한다.
+- [ ] 로컬 test DB와 Preview용 테스트 DB에서 migration을 검증한다. Production에는 사전 백업/복구 절차와 롤아웃 확인 후 적용한다.
+- 완료 기준: 공개 사용자는 공개 정보만 보고 관리자는 허용된 CRUD를 수행한다. 브라우저나 REST API에서 RLS를 우회해 개인정보·관리 데이터를 얻거나 변경할 수 없다.
+
+### FE-T42. 비회원 수강 신청 API와 운영 공개 조건
+
+- 우선순위: P0 / 요구사항: PRD FE-04, NFR-05 / 의존성: FE-T40~FE-T41
+- [x] Production 과정 관리에서 `MockClassOffer`와 `AcademyClass`를 분리했다. 운영 `AcademyClass`는 공개/검토 상태, 회차, 외부 신청 URL, 마감과 교육비를 저장하고 사이트는 공개·검토 완료 항목만 조회한다. 이 기능은 FE-T41 Production migration·배포 후 활성화된다.
+- [ ] 실제 신청 모델과 접수 상태를 추가한다. 개인정보 안내 버전/동의 시각·처리 상태를 저장하는 schema migration과 검증을 구현한다.
+- [ ] `/api/enrollments` 실제 제출 경로를 추가하고 mock API와 환경/응답을 구분한다. `/haru/apply`에서 공개된 모집 중 과정의 비회원 신청을 지원한다. 로그인·회원가입 없이 신청서를 제출하고 오류·완료 상태를 알린다.
+- [ ] 같은 출처 API에서 모든 입력을 서버 재검증하고 개인정보 동의 버전/시각, 과정 ID와 신청 당시 과정명을 저장한다. 모집 비활성·비공개·마감 과정, 위조 필드, 잘못된 동의는 거부한다.
+- [ ] API에 Origin/CSRF 검증, 요청 빈도 제한, honeypot 등 남용 억제, 중복 제출 방지와 최소 응답을 적용한다. 재시도·동시 제출에도 같은 신청이 중복 저장되지 않도록 idempotency key와 DB 고유 제약/원자적 삽입을 검증한다. 신청자 데이터와 Secret key를 로그·분석·브라우저 저장소에 기록하지 않는다.
+- [ ] Public/anon 역할은 신청자 SELECT·UPDATE·DELETE가 불가능하고 직접 INSERT도 할 수 없음을 확인한다. API 성공 응답에서 신청자 필드를 돌려주지 않는다.
+- [ ] Test DB에서 정상·오류·마감·중복 제출 흐름을 확인하고, 비회원 공개 과정 조회와 Production이 아닌 신청 저장을 검증한다. Playwright에서 페이지 조회·신청 후 `/admin` 접근 거부와 공개 지점 페이지 영향을 확인한다.
+- [ ] Production 공개 전에 운영 과정·개인정보 수집·이용 및 동의 문구·보유/삭제 기간·접수 담당·취소 안내·오류 대응 절차를 확정한다. 조건이 충족되지 않으면 신청 UI/API는 비활성 상태를 유지한다.
+- 완료 기준: 일반 방문자는 공개 승인된 과정에 로그인 없이 신청할 수 있고 신청자 데이터는 본인이나 다른 방문자에게 조회되지 않으며, 관리자 허용 계정만 이를 관리한다. Production 활성화는 공개 준비 항목 확인 후 별도로 완료 체크한다.
+
+
+## 14. I단계 — 전체 코드·문서 정합성 점검
+
+### FE-T43. PRD 대응표와 코드 리팩터링
+
+- 우선순위: P0 / 요구사항: FE-01·FE-03·FE-04·FE-07·FE-09, NFR-03·NFR-04·NFR-05 / 의존성: FE-T39~FE-T40
+- [x] PRD의 현재 상태와 최종 요구사항을 구분하고 FE/NFR 전체 대응표를 추가한다. 인증·Supabase 범위 제외, UUID/이메일 허용 목록, API 경로, 초기 로컬/현재 운영 조건의 모순을 정리한다.
+- [x] 실제 교육/신청 모델·schema·idempotency 작업을 FE-T42에 연결하고 FE-T41의 서버/DB 허용 기준 동기화와 운영 검증을 남긴다.
+- [x] 운영 환경에서 Supabase 관리자 지점 조회가 개발 전용 조건에 막히던 문제를 수정하고, 지점·채용·사이트맵의 공개 지점 조회를 통일한다. 공개 DTO에서 관리용 필드·임의 JSON 필드를 제외한다.
+- [x] 관리자 Production 변경을 서버 API에서 차단하고 지점 UI를 조회 전용으로 표시한다. Production mock 카탈로그와 비개발 환경의 로컬 신청 파일 읽기를 차단하며, 잘못된 저장 설정을 제출 가능 상태로 표시하지 않는다.
+- [x] 중복 JSON 응답·Origin/Content-Type·본문 크기 검사와 파일 쓰기 큐·원자적 교체를 공통화한다. 본문 크기는 스트림 읽기 중 제한하며 옛 로컬 관리자 전용 검사와 사용되지 않는 조회 export를 정리한다.
+- [x] Supabase 조회의 1,000행 기본 응답 제한을 페이지 조회로 처리하고, CSV 수식 방어용 escaping이 DB 원문을 변형하지 않게 한다. 테스트 저장 실패를 접수 성공으로 응답하지 않는다.
+- [x] 인증 페이지의 중첩 main을 제거하고 로그아웃 실패를 사용자에게 알린다. 메인 채용 CTA에도 기존 브라우저 마감 검사를 재사용한다.
+- [x] Node.js 24.21.0에서 lint·strict 타입/미사용 검사·전체 규칙 테스트·Production build가 통과했다. 최종 로컬 Production 서버의 24개 HTTP 요청, main/noindex/mock 비노출과 관리자 차단을 확인하고 임시 서버를 종료했다. 14개 FE/NFR 대응과 문서의 로컬 링크도 확인했다. 상세 조건·한계는 [project-audit.md](./project-audit.md) 참조.
+- 완료 기준: 문서의 현재 상태가 코드와 맞고, 중요한 회귀 검증이 통과한다. 운영 배포·실제 계정·RLS·실제 접수·전체 시각 QA는 해당 후속 작업에서 별도로 검증한다.

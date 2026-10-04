@@ -2,7 +2,8 @@ import Link from "next/link";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { getBrandCopyForDevelopmentReview, getJobCollectionState, getPublicBranches, getPublicJobs } from "@/content/queries";
+import { getBrandCopyForDevelopmentReview, getJobCollectionState, getPublicJobs } from "@/content/queries";
+import { getSalonDirectoryData } from "@/content/local-branches";
 import { createPageMetadata } from "@/lib/seo";
 import type { RecruitmentStatus } from "@/types/content";
 import styles from "@/app/content-pages.module.css";
@@ -13,6 +14,8 @@ const statusLabel: Record<RecruitmentStatus, string> = {
   closed: "마감",
   completed: "종료",
 };
+
+export const dynamic = "force-dynamic";
 
 const statusKind = {
   upcoming: "upcoming",
@@ -25,20 +28,23 @@ function formatDate(value: string): string {
   return new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", dateStyle: "long" }).format(new Date(value));
 }
 
-export function generateMetadata() {
+export async function generateMetadata() {
+  const { branches } = await getSalonDirectoryData();
+  const branchIds = new Set(branches.map((branch) => branch.id));
   return createPageMetadata({
     title: "MAY.ONE 채용",
     description: "확인된 MAY.ONE 채용 공고의 지점, 근무 조건과 지원 정보를 안내합니다.",
     path: "/recruit",
-    contentAvailable: getPublicJobs().length > 0,
+    contentAvailable: getPublicJobs().some((job) => branchIds.has(job.branchId)),
   });
 }
 
-export default function RecruitPage() {
+export default async function RecruitPage() {
   const brand = getBrandCopyForDevelopmentReview();
-  const jobs = getPublicJobs();
   const state = getJobCollectionState();
-  const branches = new Map(getPublicBranches().map((branch) => [branch.id, branch]));
+  const directory = await getSalonDirectoryData();
+  const branches = new Map(directory.branches.map((branch) => [branch.id, branch]));
+  const jobs = getPublicJobs().filter((job) => branches.has(job.branchId));
   const preview = Boolean(brand && (brand.publicationState !== "published" || brand.reviewState !== "confirmed"));
 
   return (

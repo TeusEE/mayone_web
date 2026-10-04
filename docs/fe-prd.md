@@ -1,8 +1,8 @@
 # MAY.ONE 프론트엔드 PRD
 
 - 작성일: 2026-09-27
-- 최근 갱신: 2026-10-02
-- 상태: 원본 기준 브랜드 홈페이지와 Vercel Production 배포 완료; Supabase 테스트 DB 연동·가져오기·CRUD 검증 완료. 로컬/Preview는 테스트 DB, Vercel Production은 별도 운영 DB만 선택하도록 런타임 검증을 구현했다. Production DB 환경변수·migration·운영 자료 준비와 실제 신청 접수·운영 관리자 기능은 남아 있음
+- 최근 갱신: 2026-10-04
+- 상태: 브랜드 홈페이지·공개 지점과 테스트/운영 Supabase 연결은 기존 배포 기록에서 확인했다. FE-T40 관리자 이메일·비밀번호 인증과 페이지/API 보호를 구현하고 2026-10-04 Vercel Production에 배포했다. 사용자 승인으로 `dslee1311@naver.com`, `jjcoin2@gmail.com`을 Production 허용 목록에 추가해 재배포했다. `dslee1311@naver.com` 초대 요청은 처리됐고 `jjcoin2@gmail.com`은 Supabase 이메일 발송 제한(429)으로 재시도가 필요하다. 실제 메일 수신·초기 비밀번호 설정·로그인·권한 회수 검증은 대기 중이다. FE-T41 관리자 JWT/RLS 전환과 FE-T42 실제 비회원 신청은 미구현이다. Production 관리자 변경 API와 mock 신청은 차단하며 공개 조회는 유지한다. 2026-10-04 코드·문서 정합성 점검 결과는 [project-audit.md](./project-audit.md)에 기록한다.
 - 구현 작업: [fe-task.md](./fe-task.md)
 
 ## 1. 목적과 기준 문서
@@ -36,8 +36,24 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 | 페이지 구성 | 원본 HTML 기준 브랜드 랜딩 + 기존 지점·교육·채용 목록/상세와 산학협력·브랜드 안내 경로 |
 | 예약·신청·지원·문의 | 확정된 공식 외부 링크 또는 담당 채널로 연결 |
 | 마켓 | 외부 네이버 스마트스토어 이동; 자체 상품 판매·결제 없음 |
-| 인증 | 추후 카카오·네이버 회원가입 예정. 이번에는 구현하지 않음 |
-| Supabase | 지점·과정·테스트 신청 저장에 사용; 서버 전용 Secret key와 RLS가 적용된 테이블 사용. Supabase Auth는 보류 |
+| 사용자 인증 | 일반 방문자는 계정을 만들거나 로그인하지 않는다. 수강 신청은 공개 페이지에서 비회원으로 제출할 수 있다. |
+| 관리자 인증 | 관리자 2~3명만 Supabase Auth 이메일·비밀번호로 `/admin`에 로그인한다. 공개 회원가입을 끄고 서버 환경변수의 이메일 허용 목록에 등록된 개별 계정만 허용한다. 2단계 인증은 요구하지 않는다. |
+| Supabase | 테스트·운영 데이터 저장소로 사용한다. 공개 조회, 비회원 신청 제출, 관리자 CRUD를 서로 다른 grants/RLS/API 경로로 분리한다. Secret key는 서버에서 제한적으로만 사용한다. |
+
+### 1.3 현재 구현과 목표 요구사항의 구분
+
+FE-01~FE-09와 NFR-01~NFR-05는 최종 제품 요구사항이다. 아래 현황과 `fe-task.md`의 완료 체크는 현재 코드에서 확인한 범위이며, 운영 검증 대기는 구현 완료와 구분한다. 전체 요구사항별 작업 연결은 [fe-task.md §1.1](./fe-task.md#11-요구사항과-작업-대응표)을 따른다.
+
+| 영역 | 현재 구현 | 남은 작업 |
+| --- | --- | --- |
+| 브랜드·지점 | 원본 랜딩, 공개 지점 목록·검색·예약 링크. 지점 목록·채용 관계·사이트맵은 같은 공개 지점 조회를 사용 | 공식 에셋·도메인, 상세 지점 자료, 전체 시각 QA — T12·T18·T20~T24 |
+| 실제 교육 | 정적 `AcademyClass` 목록·상세·외부 신청 CTA. 승인된 실제 교육 데이터는 없음 | 운영 과정/회차 모델·공개 상태·내부 신청 기능 — T41~T42 |
+| 테스트 교육·신청 | 개발/Preview의 `MockClassOffer`와 테스트 확인 동의. `/api/mock-enrollments`는 테스트 제출 전용 | 실제 개인정보 동의·신청 처리로 전환 — T42 |
+| 관리자 인증 | Supabase Auth + 서버 `ADMIN_EMAIL_ALLOWLIST`, 서버 인증 API·HttpOnly cookie, 로그인 복귀·계정 메뉴, 초대/복구 callback, 페이지/API 검사 | 첫 관리자와 `dslee1311@naver.com` 초대 요청 완료, `jjcoin2@gmail.com`은 이메일 발송 제한 후 재시도 필요; 실제 수신·초기 비밀번호·세션·허용 해제 검증 — T40 |
+| 데이터 권한 | 서버 Secret key 어댑터. 브라우저 `anon`·`authenticated`의 직접 테이블 접근은 기존 migration에서 차단 | 공개 projection/SELECT 정책과 관리자 JWT/RLS — T41 |
+| 관리자 변경 | 인증된 테스트 환경에서 Supabase CRUD, Auth만 설정한 로컬 개발에서는 loopback 파일 fallback. 운영 지점은 관리자 조회 가능 | Production 변경은 T41 검증 전 `503`; 운영 과정·신청 관리는 T42까지 대기 |
+
+이전 DB 연결·migration 기록은 유지하며, 2026-10-04 추가 배포에서는 Vercel Production의 서버 관리자 이메일 허용 목록과 최신 앱 코드를 적용했다. DB migration과 Auth 계정의 비밀번호는 변경하지 않았다. 후속 배포에서는 홈페이지의 Dashboard 초대 fragment 처리를 추가하고, 사용자 승인 후 운영 첫 관리자 계정의 초대 요청과 생성 상태를 확인했다. 이후 승인된 두 이메일을 허용 목록에 추가해 재배포했다. 공개 페이지는 관리자 로그인 없이 유지한다. 테스트 CSV의 `isMock: true`와 `testDataAcknowledged`는 실제 교육 공개 상태나 개인정보 동의를 대체하지 않는다.
 
 ## 2. 목표, 이용자, 범위
 
@@ -64,17 +80,21 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 
 | 이번 구현에 포함 | 후속 범위 |
 | --- | --- |
-| 반응형 랜딩과 공개 정보 페이지 | 카카오·네이버 회원가입, 로그인, 로그아웃, 세션 |
-| 지점명 검색·확정 지역 필터 | 마이페이지, 회원 전용 교육·신청 이력 |
-| 교육 분야·모집 상태 필터 | Supabase Auth·Storage 및 계정 권한 |
-| Supabase에 저장하는 mock 과정과 테스트 신청 입력·저장·관리 시연 | 실제 신청 접수·운영 알림·정원 관리 |
-| 채용 목록·상세 및 상태 안내 | 관리자 CMS, 실시간 모집·잔여석 관리 |
-| 공식 외부 예약·지원·문의 이동 | 실제 수강 신청 저장, 파일 업로드, 운영 알림 |
-| SEO, 공유 메타데이터, 이미지 최적화 | 자체 결제·장바구니·예약 엔진 |
-| 오류·빈 목록·자료 준비 상태 | 지도 SDK·위치 기반 검색, 글로벌 검색, 다국어 |
+| 반응형 랜딩과 공개 정보 페이지 | 카카오·네이버 일반 회원가입, 마이페이지, 회원 전용 이력 |
+| 지점명 검색·확정 지역 필터 | 실시간 정원·대기자 관리, 운영 알림 |
+| 공개 교육 정보와 비회원 수강 신청 흐름 | 결제, 파일 업로드, 자동 환불·취소 처리 |
+| 공개 수강 신청은 로그인 없이 제출하고, 신청자 개인정보는 관리자만 조회·관리 | 채용·산학협력의 자체 접수 시스템 |
+| Supabase Auth 관리자 이메일·비밀번호 로그인, 이메일 허용 목록·서버/API 및 DB 권한 검사 | 세분화된 관리자 역할·승인 워크플로 |
+| 지점·과정·신청자의 환경별 Supabase 저장 및 관리자 CRUD | CMS, 실시간 모집·잔여석 관리 |
+| 공식 외부 예약·상품 구매·지원·문의 이동 | 자체 결제·장바구니·예약 엔진 |
+| SEO, 공유 메타데이터, 이미지 최적화 | 지도 SDK·위치 기반 검색, 글로벌 검색, 다국어 |
 | Vercel Preview/Production 배포 준비 | 분석 서비스 도입과 실제 전환율 측정 |
 
-지점, mock 과정과 테스트 신청은 Supabase의 `mayone_branches`, `mayone_class_offers`, `mayone_enrollments` 테이블에 저장한다. 서버 전용 `SUPABASE_SECRET_KEY`만 사용하며 비로그인·authenticated API 역할의 테이블 권한을 회수하고 RLS를 켠다. `.env.local`과 Vercel Preview는 `SUPABASE_DATA_TARGET=test`로 테스트 프로젝트를 사용하고, Vercel Production은 `SUPABASE_DATA_TARGET=production`과 별도 운영 프로젝트 접속값을 사용한다. 런타임은 Vercel 환경과 target이 다르면 연결을 거부하며, 로컬 자료 import 스크립트는 테스트 DB에서만 실행한다. Production DB는 별도 migration 후 공개할 운영 지점·과정만 채우고 테스트 신청 자료는 가져오지 않는다. 키가 설정되지 않은 로컬 개발은 기존 JSON/CSV 파일로 동작한다. 관리자 화면과 변경 API는 개발 모드 및 loopback Host에서만 열리고, 신청 화면은 mock 흐름임을 명시한다. 실제 접수·회원 인증·운영 관리자 기능은 별도 요구사항과 개인정보 처리 절차가 정해진 뒤 구현한다.
+지점·과정·신청은 Supabase의 `mayone_branches`, `mayone_class_offers`, `mayone_enrollments`에 저장한다. `.env.local`은 테스트 프로젝트와 `SUPABASE_DATA_TARGET=test`, Vercel Production은 별도 운영 프로젝트와 `SUPABASE_DATA_TARGET=production`을 사용한다. Production에는 공개·검토 완료된 지점 8곳만 있으며 과정·신청 데이터는 비어 있다. Vercel Preview에는 Supabase 환경변수가 아직 없다. 런타임은 배포 환경과 target이 다르면 연결을 거부하며, 로컬 import는 테스트 DB만 허용한다. 관리 데이터 설정이 없는 로컬 개발은 기존 JSON/CSV fallback을 쓴다. 관리자 화면에는 Supabase Auth 설정과 허용 계정이 필요하다. 로컬·Preview는 `ADMIN_EMAIL_ALLOWLIST`를 사용하고, Production 권한 기준은 서버 전용 `mayone_admin_emails` 테이블이다. 파일 쓰기는 개발 모드·loopback Host로 제한한다. 일부 관리 데이터 변수가 설정되었거나 target이 맞지 않으면 fallback으로 전환하지 않고 오류를 표시한다.
+
+최종 접근 모델은 다음과 같다. 비회원 방문자는 공개된 지점·과정만 읽고, 신청 가능한 과정의 신청서는 같은 출처 서버 API로 제출한다. 신청 테이블은 브라우저 역할에 직접 공개하지 않아 신청자 조회·수정·삭제를 막고, API가 입력·동의·모집 상태를 검증한 뒤 저장한다. 관리자는 공개 회원가입이 꺼진 Supabase Auth의 개별 이메일·비밀번호 계정으로 로그인하고, 서버 전용 이메일 허용 목록에 있는 계정만 관리자 기능을 쓴다. Production의 서버 검사와 RLS는 `mayone_admin_emails`를 함께 사용한다. 관리 콘텐츠의 Production 추가·수정은 사용자 JWT로 RLS를 통과하며, 삭제와 신청자 데이터 변경은 별도 승인·완료 전까지 차단한다. 별도 2단계 인증은 요구하지 않는다. 관리자 페이지와 매 변경 API에서 세션과 이메일 허용 여부를 확인하고, DB RLS도 관리자 권한을 검사한다. 로그인·권한 검사는 `/admin`에만 적용되어 공개 페이지 조회와 비회원 신청에 영향을 주지 않는다.
+
+Production에서 실제 접수를 켜기 전에는 공개할 과정, 개인정보 수집·이용 안내와 동의, 보유·삭제 기간, 접수 담당 절차를 확정해야 한다. 현재 Production 신청 화면과 쓰기 API는 계속 비활성이다.
 
 ### 2.4 초기 성공 기준
 
@@ -101,7 +121,7 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 - 데스크톱은 한 줄 헤더, 좁은 화면은 햄버거 버튼과 사이드 패널을 사용한다. 메뉴가 깨지기 전에 접는다.
 - 헤더는 상단 고정 또는 sticky 방식으로 유지한다. 앵커 대상은 헤더 높이만큼 스크롤 여유를 둔다. 메인에서 현재 해시와 같은 앵커를 다시 선택해도 해당 섹션으로 다시 이동한다.
 - 앵커 정렬에는 일관된 스크롤 오프셋 하나만 적용한다. `scroll-padding`과 `scroll-margin`이 중복되어 섹션이 헤더 아래로 과하게 밀리지 않게 한다.
-- 로그인·회원가입·MY 버튼과 검색 아이콘은 이번에 노출하지 않는다. 검색은 지점 목록 안에서 제공한다.
+- 일반 방문자를 위한 로그인·회원가입·MY 버튼은 노출하지 않는다. 관리자 로그인은 공개 내비게이션과 분리된 `/admin/login`에서 제공한다. 검색은 지점 목록 안에서 제공한다.
 
 ### 3.2 구현 경로
 
@@ -112,11 +132,18 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 | `/salon/[branchId]` | 지점·디자이너·스타일·방문·예약 안내 | 공개 가능한 지점 데이터 존재 |
 | `/haru/classes` | 교육 목록, 분야·모집 상태 필터 | 자료 미확보 시 준비 상태도 제공 |
 | `/haru/classes/[classId]` | 교육 내용·강사·일정·비용·신청 안내 | 공개 가능한 교육 데이터 존재 |
-| `/haru/apply` | 과정·회차 선택과 수강 신청 입력 흐름 | mock 입력을 Supabase(설정된 환경) 또는 개발 fallback CSV에 저장; 실제 접수는 비활성 |
-| `/admin` | 로컬 관리자 메뉴와 신청자·과목 관리 진입 화면 | 로컬 개발 + loopback Host 전용; Preview·Production에서는 404 |
-| `/admin/enrollments` | 테스트 신청 데이터 확인·수정·삭제 | 로컬 개발 + loopback Host 전용; Preview·Production에서는 404 |
-| `/admin/classes` | mock 수강 과목 추가·수정·삭제 | 로컬 개발 + loopback Host 전용; Preview·Production에서는 404 |
-| `/admin/branches` | 지점 자료 확인·추가·수정·삭제, 공개 상태 관리 | 로컬 개발 + loopback Host 전용; Preview·Production에서는 404 |
+| `/haru/apply` | 공개 과정의 비회원 수강 신청 입력 흐름 | 신청을 받도록 승인된 공개 과정만 제출 가능; 과정·개인정보 안내 준비 전에는 비활성 |
+| `/api/mock-enrollments` | 현재 테스트 수강 신청 제출 API | 개발/Preview 전용; 테스트 확인·과정·입력 검증 후 저장, Production은 404 |
+| `/api/enrollments` | FE-T42에서 추가할 실제 비회원 수강 신청 제출 API | 현재 미구현; 개인정보 동의·공개/모집 상태·남용 방지 검증 후 저장 |
+| `/admin/login` | 허용된 관리자의 이메일·비밀번호 로그인 및 비밀번호 재설정 | 공개 회원가입 없음; 이메일 허용 목록의 계정만 로그인 후 이용 |
+| `/api/admin/auth/[action]` | login·recovery·password·logout·session 서버 인증 처리 | 같은 출처 JSON·본문 크기 검사; 로그인/세션 교환·비밀번호 저장은 서버 Auth 사용자와 허용 목록 확인 |
+| `/auth/callback` | Supabase Auth의 PKCE·token hash 초대/복구 반환 경로 | code 또는 invite/recovery token hash 교환 후 서버에서 관리자 확인; 실패 시 로그인 안내 |
+| `/admin/auth-link` | 기존 implicit hash 초대/복구 링크 확인 | 토큰 fragment를 즉시 제거하고 서버 세션으로 교환; 기존 로그인 상태에서도 링크 처리 |
+| `/admin/complete-invite` | 초대·복구 및 기존 관리자 비밀번호 설정 | 서버에서 허용 계정 확인; 12~128자·확인 입력을 서버 재검증하고 저장 후 관리자 홈으로 이동 |
+| `/admin` | 관리자 메뉴와 신청자·과목·지점 관리 진입 화면 | 인증된 허용 목록 관리자만; 다른 사용자는 로그인으로 이동 또는 접근 거부 |
+| `/admin/enrollments` | 신청자 데이터 확인·수정·삭제 | 관리자 권한 필요; 신청자 개인정보는 일반 방문자에게 제공하지 않음 |
+| `/admin/classes` | 교육 과정 추가·수정·삭제 | 관리자 권한 필요; 공개 상태·모집 상태를 별도로 관리 |
+| `/admin/branches` | 지점 정보 확인·추가·수정·삭제, 공개 상태 관리 | 관리자 권한 필요 |
 | `/haru/cooperation` | 공개 확인된 산학협력 프로그램·기관·문의 안내 | 실제 공개 자료가 있을 때만 표시하고 문의는 채널 확보 후 활성화 |
 | `/recruit` | 성장 경로와 채용 목록 | 공고 미확보 시 준비 상태도 제공 |
 | `/recruit/[jobId]` | 채용 조건·절차·지원 안내 | 공개 가능한 공고 데이터 존재 |
@@ -175,7 +202,7 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 - 검색 결과가 없으면 지점명이나 지역을 바꾸도록 안내한다. 이 페이지에는 조건 초기화 버튼을 두지 않으며, 지역 필터는 실제 확정 지역값으로 생성한다.
 - `/salon`은 지점마다 넓은 세로형 정보 블록을 배열한다. 지점명·지역, 주소, 매장 전화, 운영시간·휴무, 주차, 찾아가는 길, 매장 편의 정보와 예약 CTA를 확인된 범위에서 표시한다.
 - 지점별 네이버 예약 CTA는 공식 예약 URL이 확인된 경우에만 활성화한다. 네이버 플레이스 URL은 출처·운영 정보 관리에 사용하고, 별도 플레이스 링크는 목록에 표시하지 않는다.
-- `/admin/branches`에서 지점 자료를 확인·추가·수정·삭제하고 초안 또는 공개 상태를 관리한다. Supabase 설정 시 `mayone_branches`를 사용하고, 키가 없을 때는 `.local-data/branches.json`을 로컬 fallback으로 쓴다. 공개 및 검토 완료 지점만 `/salon` 목록에 반영한다. 관리자 화면과 변경 API는 개발 모드 및 loopback Host에서만 허용하고 검색 색인에서 제외한다.
+- `/admin/branches`에서 지점 자료를 확인·추가·수정·삭제하고 초안 또는 공개 상태를 관리한다. Supabase 설정 시 `mayone_branches`를 사용하고, 키가 없을 때는 `.local-data/branches.json`을 로컬 fallback으로 쓴다. 공개 및 검토 완료 지점만 `/salon` 목록에 반영한다. 관리자 화면과 매 변경 API는 서버에서 Supabase Auth 사용자와 관리자 허용 목록을 확인하고, DB RLS도 변경을 제한한다. 관리자 경로는 검색 색인에서 제외한다.
 - 정보 수집이 어려운 동안 지점 상세 보기와 `/salon/[branchId]` 경로는 임시 비활성화하고 사이트맵에서도 제외한다. 상세 정보를 확보하면 상세 화면을 재개한다.
 - 실제 지점 사진이 확인된 경우에만 사진을 표시한다. 사진 자료가 없으면 빈 갤러리나 임의 이미지를 만들지 않는다.
 - 상세는 지점 소개 → 방문 안내 → 디자이너 → 스타일 → 예약 순으로 구성한다. 사진·디자이너·스타일이 없는 선택 영역은 숨긴다.
@@ -194,19 +221,19 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 - 날짜·시간은 명시적인 시간대와 함께 저장하고 한국 이용자에게 `Asia/Seoul` 기준으로 표시한다.
 - 메인의 HARU CTA는 `/haru/classes` 교육 목록으로 연결하고, 원하는 과정의 신청 버튼이 `/haru/apply?classId=...`로 해당 과정을 전달한다. 교육 탐색과 신청 시작을 같은 비중의 메인 버튼으로 나란히 두지 않는다.
 - `/haru/apply?classId=...`는 선택 과정과 일정·강사·대상·장소·비용·준비물·마감을 먼저 확인한 뒤 신청 정보를 받는다. 중복 과정 목록은 숨기고 다른 과정은 `/haru/classes`에서 찾게 한다. ID 없는 `/haru/apply`는 먼저 과정 선택 단계만 보여주고, 신청 가능한 과정이 선택된 뒤 입력 폼을 표시한다.
-- 신청자는 이름·휴대전화, 선택 입력(근무 매장·경력·문의)을 작성한다. 입력 이름·오류·도움말은 각 항목 가까이에 표시한다.
+- 신청자는 이름·휴대전화와 접수에 필요한 최소 정보만 작성하고 개인정보 수집·이용 안내를 확인한다. 선택 입력(근무 매장·경력·문의)은 실제 목적에 필요한 경우에만 둔다. 입력 이름·오류·도움말은 각 항목 가까이에 표시한다.
 - `src/content/fixtures/class-offers.csv`는 Supabase 초기 가져오기 및 키 미설정 로컬 fallback용 mock 과정 카탈로그다. 한 행은 신청 과정/회차 한 건이며 헤더는 `id,title,category,instructor_label,summary,audience,starts_at,ends_at,time_zone,location,tuition_krw,materials,recruitment_status,application_deadline,is_mock`로 고정한다. 분야·모집 상태는 기존 enum을 쓰고 모든 예시의 `is_mock`는 `true`다. 타사 강사 이름·실제 연락처·실제 모집 정보는 넣지 않는다.
 - 과정 목록과 로컬 관리자 과목 목록은 기존 분야 순서(CUT, PERM, COLOR, CONSULTING, SALON WORK)에 따라 분야별 제목·과정 수와 함께 시각적으로 묶어 표시한다. 각 분야 안에서는 시작 일시가 빠른 과정부터 표시한다.
-- 개발/Preview의 메인 HARU CTA는 교육 목록으로 연결한다. 목록·상세의 각 과정은 모집 가능한 경우에만 해당 ID를 전달해 `/haru/apply?classId=...` 시연 흐름을 시작한다. 목록에는 가상 정보임을 분명히 표시하고, 모집 예정·마감·종료 과정은 신청 링크를 비활성화한다. Production은 mock 목록·상세·CTA·신청 UI를 제공하지 않는다.
+- 메인 HARU CTA는 교육 목록으로 연결한다. 목록·상세의 각 과정은 공개 및 모집 중이며 신청이 허용된 경우에만 해당 ID를 전달해 `/haru/apply?classId=...`로 이동한다. 개발/Preview의 mock 과정·신청은 테스트 전용으로 명시하고 Production 콘텐츠에 섞지 않는다. Production에서는 승인된 실제 과정만 공개하고, 준비 전에는 신청 UI를 비활성화한다.
 - 과정 선택 카드의 클릭 동작과 정보 확인은 모달로 제공한다. 모달에는 과정/회차 정보와 상태를 요약하고, 모집 중이며 기한이 지나지 않은 과정만 선택하게 한다. 모달은 키보드 Escape 닫기와 초점 복귀를 지원한다.
-- 신청 화면은 과정 선택 → 신청자 입력 → 테스트 결과의 짧은 흐름으로 구성한다. [Siddhi 서울](https://siddhi.co.kr/) 첫 화면의 모집 상태·대표 과정·회차 날짜/시간·빠른 상담 CTA의 정보 우선순위를 참고한다. MAY.ONE의 색상·타이포그래피·컴포넌트 체계를 적용하며, 확인되지 않은 MAY.ONE 전화·메신저 CTA는 만들지 않는다.
-- mock 제출은 테스트 시연이다. API가 입력을 재검증한 뒤 Supabase 설정 환경에서는 `mayone_enrollments`에 저장하고, key 미설정 로컬 개발에서는 `.local-data/mock-enrollments.csv`에 저장한다. 신청자 테이블은 RLS를 켜고 `anon`·`authenticated`의 권한을 회수한다. Secret key는 서버 API 경로 안에서만 쓰며, 입력값을 애플리케이션 로그·분석 또는 브라우저 저장소에 기록하지 않는다. 테스트용 임의 값만 입력하도록 안내하고 실제 접수와 구분한다.
-- 신청 저장은 로컬 개발 또는 명시적으로 허용된 Preview 환경에서만 제공한다. Preview는 서버 전용 Supabase key가 있을 때만 테스트 기록을 저장하며, Production은 mock 과정·신청 폼·저장 API를 제공하지 않는다. 실제 접수는 공식 과정·개인정보 수집 안내·담당 절차·운영 저장 수단을 검증한 뒤 별도로 활성화한다.
-- `/admin/enrollments`는 Supabase 또는 로컬 fallback에서 신청자 테스트 기록을 서버에서 읽어 과정별 신청 인원과 최근 신청 시각을 요약해 기본 접힘 상태로 표시한다. 과정 행을 선택하면 해당 과정 신청자를 상세 목록으로 펼친다. 각 과정 안에서는 신청 시각 최신순으로 신청자 이름·휴대전화·선택 입력·제출 시각을 보여준다. 같은 과정 ID에서 과정명이 변경된 이력이 있으면 최신 신청의 과정을 그룹 제목으로 사용하고, 기존 신청 카드는 신청 당시 과정을 별도로 표시한다. 로컬 관리자 화면에서 신청자 입력값(이름·휴대전화·근무 매장·경력·문의)을 수정하거나 기록을 확인 후 삭제할 수 있으며, 과정과 제출 시각은 보존한다. 변경은 같은 출처 요청으로 서버에서 다시 검증한다. 화면과 쓰기 API는 개발 환경 및 `localhost`, `127.0.0.1`, `[::1]` Host에서만 허용하고 검색 색인에서 제외한다. 공개 내비게이션이나 CSV 다운로드·조회 API는 제공하지 않는다. 이 화면은 운영 관리자 인증을 대체하지 않는다.
-- `/admin`은 공개 메뉴에 노출하지 않는 로컬 테스트 관리자 진입점이다. 신청자 조회, 과목 관리, 지점 관리로 연결한다. `/admin/classes`는 Supabase 설정 시 `mayone_class_offers`에서 mock 과정의 분야·소개·강사·대상·일정·장소·비용·준비물·모집 상태를 추가·수정·삭제하고, 미설정 로컬 개발에서는 `.local-data/mock-class-offers.csv`를 사용한다. `/haru/classes`와 `/haru/apply`는 같은 카탈로그를 조회한다. `/admin/branches`도 같은 방식으로 Supabase `mayone_branches` 또는 로컬 JSON을 관리하고 공개 지점 목록에 반영한다. 모든 관리자 화면과 변경 API는 개발 환경·loopback Host·같은 출처 요청으로 제한하고 검색 색인에서 제외한다. 이 기능은 운영 관리자 인증/CMS를 대체하지 않는다.
-- Production에서는 CSV mock과 입력 폼을 노출하지 않는다. 운영 자료가 없으면 준비 상태를 표시하고, 실제 접수는 공식 과정·개인정보 수집 안내·담당 절차·저장 수단을 검증한 뒤 별도로 활성화한다.
+- 신청 화면은 과정 선택 → 신청자 입력 → 제출 결과의 짧은 흐름으로 구성한다. [Siddhi 서울](https://siddhi.co.kr/) 첫 화면의 모집 상태·대표 과정·회차 날짜/시간·빠른 상담 CTA의 정보 우선순위를 참고한다. MAY.ONE의 색상·타이포그래피·컴포넌트 체계를 적용하며, 확인되지 않은 MAY.ONE 전화·메신저 CTA는 만들지 않는다.
+- 비회원은 로그인 없이 신청할 수 있다. 브라우저는 `mayone_enrollments`를 직접 읽거나 쓰지 않고 같은 출처 신청 API만 호출한다. API는 타입·길이·동의·공개 과정 ID·신청 허용 상태·마감 시각을 서버에서 다시 검사하고, origin/CSRF와 요청 빈도·스팸 입력을 제한한 뒤 최소 신청 정보만 저장한다. 공개 응답은 접수 성공 여부와 필요한 접수 식별 정보만 반환하며 신청자 데이터를 되돌려주지 않는다. 신청 입력은 로그·분석·브라우저 저장소에 기록하지 않는다.
+- `mayone_enrollments` RLS는 일반 `anon` 및 허용 목록에 없는 `authenticated` 사용자에게 조회·수정·삭제를 허용하지 않는다. 직접 테이블 쓰기도 막고 신청 API만 정해진 삽입을 수행한다. API에서만 사용하는 Secret key는 RLS를 우회하므로 서버 전용으로 격리하고, 일반 관리자 CRUD에는 사용하지 않는다.
+- `/admin/enrollments`는 이메일 허용 목록에 있고 Supabase Auth로 로그인한 관리자만 Supabase 또는 개발 fallback에서 신청자를 읽을 수 있다. 과정별 신청 인원과 최근 신청 시각을 기본 접힘 요약으로 표시하고, 과정 행을 선택하면 신청 시각 최신순으로 상세를 펼친다. 기존 표시 규칙은 신청 당시 과정명도 보존한다. 이름·휴대전화·필요한 선택 입력을 수정하거나 확인 후 삭제할 수 있다. 모든 조회/변경 페이지와 API에서 서버 권한을 확인하고, DB RLS에서도 관리자 허용 기준을 검사한다. 공개 내비게이션·신청자 조회 API·CSV 다운로드는 제공하지 않는다.
+- `/admin/classes`와 `/admin/branches`는 관리자 Auth 세션과 보호된 서버 경로로 각각 `mayone_class_offers`, `mayone_branches`를 추가·수정한다. Production에서는 사용자 JWT와 DB RLS를 함께 적용하고, 삭제는 지원하지 않는다. 운영 과정은 테스트용 `MockClassOffer`와 분리된 `AcademyClass` 모델로 저장하며 공개·검토 완료된 과정만 `/haru/classes`에 노출한다. `/haru/apply`의 운영 접수와 신청자 데이터 변경은 별도 FE-T42 승인 전까지 비활성이다. 비회원 공개 페이지는 Draft나 비공개 신청 정보에 접근하지 않는다. Production 허용 이메일은 `mayone_admin_emails`에서 관리하고, 개발·Preview는 서버 `ADMIN_EMAIL_ALLOWLIST`를 사용한다.
+- Production 신청은 공식 과정 자료, 개인정보 수집·이용 안내와 동의, 보유·삭제 기간, 접수 담당 절차가 준비된 후 활성화한다. 그 전까지 mock 과정·신청은 개발/Preview에만 표시하고 Production에는 준비 상태를 제공한다.
 
-**완료 기준:** 설정된 비운영 환경에서는 과정 선택·서버 검증·Supabase 저장을 확인할 수 있고, key 미설정 로컬 개발은 CSV fallback으로 시연할 수 있다. Production에는 mock 과정이나 실제 접수처럼 오인될 결과가 노출되지 않는다. 강의 자료 미확보·신청 가능한 강의 없음·필터 결과 없음·마감·종료를 구분한다.
+**완료 기준:** 비회원은 공개 과정만 조회하고 로그인 없이 승인된 과정을 신청할 수 있다. 서버 이메일 허용 목록에 등록된 Supabase Auth 계정은 이메일·비밀번호 로그인 후 신청자를 조회하고 지점·과정을 CRUD할 수 있다. 비관리자는 관리자 페이지/API와 신청자 데이터를 읽거나 변경할 수 없다. Production 실제 신청은 과정·개인정보 안내·보존 기간·담당 절차가 준비된 뒤에만 활성화한다. 강의 자료 미확보·신청 가능한 강의 없음·필터 결과 없음·마감·종료를 구분한다.
 
 ### FE-05. 산학협력
 
@@ -257,7 +284,7 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 | --- | --- |
 | 자료를 아직 받지 못함 | `지점 정보를 준비 중입니다.`, `교육 일정을 준비 중입니다.`, `채용 정보를 준비 중입니다.` 등 해당 영역 안내 |
 | 운영팀이 등록 항목 없음으로 확인 | `현재 신청 가능한 교육이 없습니다.`, `현재 등록된 채용공고가 없습니다.` |
-| 검색·필터와 일치하는 항목 없음 | 결과 없음 + 조건 초기화 |
+| 검색·필터와 일치하는 항목 없음 | 결과 없음 + 교육 필터 초기화; 지점은 FE-03에 따라 초기화 버튼 없이 검색/지역을 직접 변경 |
 | 확인된 콘텐츠지만 행동 URL 없음 | 콘텐츠는 표시 가능; `예약 안내 준비 중` 등 설명 + 확정 문의 수단 또는 CTA 숨김 |
 | 마감·종료·기한 경과 | 상태 텍스트 + 신청·지원 CTA 비활성 또는 숨김 |
 | 선택 이미지·프로필 없음 | 해당 선택 영역 생략; 미확정 사진을 실제 사진처럼 사용하지 않음 |
@@ -266,7 +293,7 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 
 - 링크가 없으면 `<a href="#">`나 빈 `href`를 만들지 않는다. 비활성 행동은 상태 설명으로 표현하거나 실제 `disabled` 버튼을 사용한다.
 - 외부 행동 URL은 중앙에서 관리하고 같은 CTA의 이름과 목적지를 통일한다.
-- 실제 접수되지 않은 테스트 데이터를 수강 신청 완료로 표시하지 않는다. mock 제출은 저장 위치(Supabase 또는 로컬 CSV)를 안내하고 테스트 데이터로 명시하며, Production에서는 저장을 허용하지 않고 마감·종료 과정에는 제출할 수 없다.
+- 실제 접수되지 않은 테스트 데이터를 수강 신청 완료로 표시하지 않는다. mock 제출은 저장 위치(Supabase 또는 로컬 CSV)를 안내하고 테스트 데이터로 명시하며, Production에서는 mock 저장을 허용하지 않는다. Production의 실제 신청은 공개 승인 조건이 충족된 과정에만 허용하고 마감·종료 과정에는 제출할 수 없다.
 
 **완료 기준:** 자료·운영·필터·오류 상태가 구분되고, 모든 활성 행동에 유효한 목적지가 있다.
 
@@ -317,7 +344,8 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 - 저장소 루트에 Next.js 프로젝트를 구성하고 `docs/`, `origin_source/`를 유지한다. 원자료 전체를 `public/`에 복사하지 않는다.
 - App Router + TypeScript strict를 사용한다. 구현 시작 시 지원되는 안정 버전과 호환 React·Node.js·패키지 매니저를 확인해 버전과 lockfile을 고정한다.
 - 정적 소개와 상세 본문은 Server Component를 기본으로 하고, 모바일 메뉴·검색·필터·기한에 따른 CTA 등 상호작용만 작은 Client Component로 분리한다. [Next.js Server/Client Components](https://nextjs.org/docs/app/getting-started/server-and-client-components)
-- 초기 콘텐츠는 정적 생성이 가능한 구조로 제공하고, 공개 상세 ID는 `generateStaticParams`로 생성한다. 미공개·없는 ID는 데이터 조회와 라우트에서 404로 처리한다. [generateStaticParams](https://nextjs.org/docs/app/api-reference/functions/generate-static-params)
+- 정적 소개·실제 교육 상세는 정적 생성이 가능한 구조로 제공하고, 정적 교육의 공개 상세 ID는 `generateStaticParams`로 생성한다. 관리자 변경에 영향을 받는 지점·채용·사이트맵은 요청 시 같은 공개 지점 조회를 사용하고, 한 렌더 안의 중복 지점 조회는 React `cache`로 합친다. 미공개·없는 ID는 데이터 조회와 라우트에서 404로 처리한다. [generateStaticParams](https://nextjs.org/docs/app/api-reference/functions/generate-static-params)
+- `/admin`은 인증 세션과 개인 데이터를 포함하므로 공개 페이지처럼 정적 캐시하거나 공유 캐시에 저장하지 않는다. 공개 페이지의 서버 조회는 공개 가능한 필드만 반환한다.
 - Vercel의 일반 Next.js 배포를 사용한다. 초기 화면을 정적으로 제공해도 `output: 'export'`를 필수로 하지 않는다. 후속 인증·서버 기능 도입을 위한 별도 정적 호스팅 구조를 만들지 않는다.
 - 글로벌 CSS는 토큰·리셋·공통 규칙, 컴포넌트 스타일은 CSS Modules를 기본으로 한다. 대규모 UI 프레임워크·전역 상태 관리·클라이언트 데이터 캐시를 초기 필수 의존성으로 도입하지 않는다.
 - 목록 검색·필터는 Client Component의 상태로 처리한다. 주소에 필터 상태를 저장하는 기능은 초기 필수가 아니다.
@@ -334,7 +362,14 @@ src/
     haru/cooperation/page.tsx
     recruit/page.tsx, recruit/[jobId]/page.tsx
     about/page.tsx
+    haru/apply/page.tsx
+    admin/layout.tsx, admin/login/, admin/complete-invite/, admin/auth-link/
+    admin/(protected)/  # 관리자 홈·지점·테스트 과목·테스트 신청자
+    auth/callback/route.ts
+    api/branches/, api/mock-class-offers/, api/mock-enrollments/
+    api/admin/auth/[action]/route.ts
     robots.ts, sitemap.ts
+  proxy.ts          # 관리자 경로의 Auth cookie 갱신
   components/
     layout/       # Header, MobileMenu, Footer
     ui/           # Button, Card, StatusBadge, EmptyState 등
@@ -346,12 +381,13 @@ src/
 public/
   images/         # 공개 가능한 최적화 이미지
   brand/          # 공식 로고
-tests/            # 중요한 데이터·상태 규칙과 사용자 여정
+scripts/          # 콘텐츠 검증·중요 규칙 테스트·테스트 DB import
+supabase/migrations/  # DB schema와 권한 변경 이력
 docs/
 origin_source/
 ```
 
-공식 정책 원문이 확보되면 해당 라우트를 추가한다. 인증·Supabase 폴더, 빈 콜백 라우트, 사용하지 않는 provider 파일은 이번에 만들지 않는다.
+공식 정책 원문이 확보되면 해당 라우트를 추가한다. 관리자 인증은 Supabase SSR 세션 유틸리티, 서버 인증 API, `/admin/login`과 초대·복구 경로로 구현한다. 일반 회원가입·OAuth provider·회원 fixture는 만들지 않는다.
 
 ## 7. 콘텐츠 모델과 운영
 
@@ -365,8 +401,9 @@ origin_source/
 | 디자이너·스타일 | 소속 지점 ID, 이름·직책·분야·소개·예약 URL / 실제 사진·스타일명·시술 분야·디자이너 ID |
 | 강사 | 이름·직책·분야·소개·이력·공개 가능한 사진 |
 | 교육 | 제목·분야·강사 ID·내용·대상·커리큘럼·일정·장소·비용·준비물·취소 안내·모집 상태·신청 수단·문의 |
-| 교육 mock 카탈로그 | 과정/회차 ID·과정명·분야·강사 표기·소개·대상·일정·시간대·장소·교육비·준비물·모집 상태·마감일·mock 표시. Supabase `mayone_class_offers`에 저장하고 체크인 CSV는 초기 가져오기/fallback으로 사용 |
-| 테스트 신청 | 제출 시각·테스트 식별자·과정 ID/명·이름·휴대전화·선택 입력·테스트 값 확인. Supabase `mayone_enrollments`에 저장(서버 전용 조회·쓰기, RLS 및 anon/authenticated 권한 회수); 키 미설정 로컬 fallback은 `.local-data/mock-enrollments.csv` |
+| 교육 과정/회차 | ID·과정명·분야·강사 표기·소개·대상·일정·시간대·장소·교육비·준비물·모집 상태·마감일·공개 상태·신청 허용 상태·mock 표시. Supabase `mayone_class_offers`에 저장하고 체크인 CSV는 초기 가져오기/fallback으로 사용 |
+| 수강 신청 | 제출 시각·과정 ID/신청 당시 과정명·이름·휴대전화·접수에 필요한 최소 선택 입력·개인정보 안내 버전/동의 시각·처리 상태. Supabase `mayone_enrollments`에 저장; 일반 공개 역할은 행에 접근하지 못하고 신청 API는 정해진 삽입만 허용. 개발 fallback은 `.local-data/mock-enrollments.csv` |
+| 관리자 허용 목록 | 현재 권한 기준은 서버 전용 `ADMIN_EMAIL_ALLOWLIST`의 정규화된 이메일 집합. Auth 사용자 ID/이메일은 매 요청에서 검증한다. DB의 허용 기준과 동기화·회수 방식은 FE-T41에서 구현·검증하며 기존 `mayone_admin_users` 테이블은 앱 권한 판단에 사용하지 않음 |
 | 채용 | 공고명·지점 ID·직무·자격·업무·조건·전형·모집 상태·마감일·지원 URL·문의 |
 | 산학협력 | 프로그램·협의 항목·담당 채널, 확인된 기관·프로그램별 사례 |
 
@@ -380,8 +417,8 @@ origin_source/
 
 ### 7.2 갱신과 기한 관리
 
-- 콘텐츠 수정 → 공개 상태·필수값 검증 → Preview 확인 → Production 재배포 순으로 갱신한다. 초기에는 CMS나 자동 동기화가 없다.
-- 데이터는 화면에 흩어 놓지 않고 조회 함수와 CTA 판단 규칙을 통해 사용한다. 지점·과정·신청자는 서버 저장소 모듈을 통해 Supabase에서 읽고 쓴다. Secret key는 `NEXT_PUBLIC_` 환경변수에 두지 않고 서버에서만 사용한다. 키가 없는 로컬 개발 fallback은 `.local-data/`를 쓰며, 가져오기 스크립트는 원본 파일을 지우지 않고 ID 기준으로 upsert한다.
+- 목표는 관리자에서 지점·운영 과정을 수정하고 공개 상태·필수값을 검증한 뒤 해당 환경의 공개 페이지에 반영하는 것이다. 현재 개발/Preview의 지점·mock 과정 변경만 허용하고, Production 변경은 FE-T41 완료 전 차단한다. 별도 자동 동기화는 없다. 실제 접수 개인정보는 승인된 신청 API와 보유·삭제 기준으로 처리한다.
+- 데이터는 화면에 흩어 놓지 않고 조회 함수와 CTA 판단 규칙을 통해 사용한다. 비회원 공개 조회는 공개 필드와 공개 상태만 제공한다. 관리자 변경은 검증된 Auth 세션/RLS를 거치고, 신청 제출은 별도 서버 API를 거친다. Secret key는 일반 관리자 CRUD에 쓰지 않고 `NEXT_PUBLIC_` 환경변수에도 두지 않는다. 키가 없는 로컬 개발 fallback은 `.local-data/`를 쓰며, 가져오기 스크립트는 원본 파일을 지우지 않고 ID 기준으로 upsert한다.
 - 교육·공고의 모집 상태는 운영팀이 확정한다. 종료·마감일 경과는 현재 시각으로 CTA를 추가 제한하고, 날짜만으로 모집 중 상태를 자동 생성하지 않는다.
 - 정적 빌드 시점에만 기한을 판단하면 배포 이후 오래된 버튼이 남을 수 있다. 기한이 있는 신청·지원 CTA는 브라우저 현재 시각도 확인하고, 확인 전에는 안전한 비활성 상태를 유지한다. 페이지를 오래 열어둔 경우에도 기한 도달·탭 복귀·클릭 직전에 다시 판단한다.
 - 이 제한은 실시간 정원·접수 보장을 의미하지 않는다. 외부 서비스의 실제 접수 상태가 최종 기준이며, 운영 담당자는 상태 변경 시 콘텐츠도 갱신한다.
@@ -421,6 +458,20 @@ origin_source/
 - 정상 공개 경로에 런타임 오류·콘솔 오류·깨진 이미지·빈 링크가 없어야 한다.
 - `.env.example`에는 Supabase project URL과 Secret key 환경변수 이름을 기록하되 실제 secret 값은 포함하지 않는다. Secret key는 Git·브라우저·로그에 노출하지 않는다.
 
+### NFR-05. 공개 신청과 관리자 접근 제어
+
+- 일반 방문자에게 계정·로그인을 요구하지 않는다. 공개 페이지는 기존 정보 조회 흐름을 유지하고, 로그인은 공개 내비게이션과 분리된 관리자 경로에서만 제공한다.
+- 일반 회원가입은 비활성화한다. 관리자는 2~3개의 개별 Supabase Auth 계정으로 관리하고, 서버 환경변수 `ADMIN_EMAIL_ALLOWLIST`에 이메일이 등록된 사용자만 관리자 권한을 가진다. 공유 계정은 쓰지 않으며 이메일·비밀번호 외 별도 2단계 인증은 요구하지 않는다.
+- 관리자는 초대 메일에서 직접 초기 비밀번호를 설정한다. 로그인 화면에서 같은 이메일 주소로 비밀번호 재설정 메일을 요청할 수 있으며, 인증 링크와 비밀번호 입력은 각 관리자의 브라우저에서 처리한다. 비밀번호나 인증 코드를 운영자가 대신 만들거나 전달하지 않는다.
+- 로그인 후에는 처음 요청한 관리자 화면으로 돌아가고, 복귀 주소는 알려진 관리자 경로만 허용한다. 관리자 메뉴에는 현재 로그인 이메일·선택 메뉴·비밀번호 설정·로그아웃을 제공한다. 로그인·복구·비밀번호 저장·로그아웃은 같은 출처 서버 API와 HttpOnly cookie를 사용하며 세션 토큰을 JSON 응답·브라우저 저장소에 노출하지 않는다.
+- PKCE·invite/recovery token hash·기존 implicit fragment 링크를 지원한다. 기존 세션이 있어도 복구 링크를 먼저 확인하며 만료·잘못된 링크는 재요청 안내로 연결한다. 새 비밀번호는 서버에서 12~128자와 확인 입력을 검사한다. 복구 메일은 허용 이메일에만 요청하고 계정 등록 여부를 구분하지 않는 안내를 반환한다.
+- 모든 `/admin` 페이지, Route Handler, Server Action은 서버에서 인증과 관리자 허용 목록을 확인한다. 각 DB 작업에도 RLS를 적용해 페이지 가드나 클라이언트 UI를 우회한 접근을 막는다. 관리자 허용 목록 변경은 기존 관리자 UI로 제공하지 않고 신뢰된 운영 경로에서만 한다.
+- 관리자 인증은 Supabase Auth가 검증한 세션과 서버 전용 이메일 허용 목록을 모두 확인한다. 허용 목록에 없는 로그인 계정은 공개 페이지는 계속 이용할 수 있지만 관리자 개인정보나 관리 데이터에는 접근하지 못한다.
+- 비회원 역할은 공개 상태의 지점·과정만 읽을 수 있다. 신청자 개인정보와 관리자 허용 목록의 SELECT/UPDATE/DELETE 권한은 공개 역할에 주지 않는다. 브라우저에서 신청 테이블에 직접 쓰지 못하게 하고 신청 서버 API가 입력·동의·모집 상태·마감을 재검증한 뒤 저장한다.
+- Secret key는 RLS를 우회하는 서버 비밀값으로 취급한다. 관리자 CRUD에는 인증된 사용자 세션을 사용하고, 비회원 신청 API에 Secret key가 필요하면 해당 서버 코드와 쓰기 작업만 분리해 최소 데이터만 처리한다. 브라우저·로그·Git에 키나 신청 개인정보를 노출하지 않는다.
+- 비관리자 세션, 허용 목록에서 제거된 사용자, 만료·마감 과정, 잘못된 신청 입력은 거부되어야 한다. 자동 테스트와 실제 비운영 검증에서 허용·거부 경로를 모두 확인한다.
+- 공개 신청 API에는 같은 출처 검증, 요청 빈도 제한, 스팸 방지, 최소 수집 필드, 개인정보 보존·삭제 절차를 적용한다. 상세 차단 수단과 보존 기간은 실제 접수 공개 전에 운영 기준으로 확정한다.
+
 ## 9. Vercel 배포와 공개 기준
 
 ### 9.1 배포 방식
@@ -431,7 +482,7 @@ origin_source/
 - Preview의 실제 배포 주소에서 직접 상세 접근, 새로고침, 404, 이미지, 앵커, 외부 링크, SEO와 모바일 메뉴를 확인한다.
 - 배포한 버전과 알려진 자료 공백, 콘텐츠 수정 절차, 이전 정상 배포로 되돌리는 절차를 기록한다.
 
-현재 구현은 GitHub `TeusEE/mayone_web`의 `main` 브랜치에 push되며, Vercel 프로젝트 `mayone-home`의 Production은 `https://mayone-home.vercel.app`에서 제공된다. 현재는 Git push만으로 Vercel이 자동 배포되지 않아 CLI 배포를 사용한다. Vercel Git 자동 연동과 별도 공식 도메인 설정은 남은 작업이며 자세한 상태는 [fe-task.md](./fe-task.md)에 기록한다.
+현재 구현은 GitHub `TeusEE/mayone_web`의 `main` 브랜치에 push되며, Vercel 프로젝트 `mayone-home`의 Production은 `https://mayone-home.vercel.app`에서 제공된다. 현재 Git push만으로 Vercel이 자동 배포되지 않아 수동 배포를 사용한다. Vercel Git 자동 연동과 별도 공식 도메인 설정은 남은 작업이며 자세한 상태는 [fe-task.md](./fe-task.md)에 기록한다.
 
 ### 9.2 단계별 완료 구분
 
@@ -445,39 +496,48 @@ origin_source/
 
 자료가 없는 경우 화면 구현 완료와 기능 공개 완료를 같은 상태로 기록하지 않는다. 초기 브랜드 공개는 가능하지만 준비 중 영역을 실제 예약·신청 서비스의 완료로 간주하지 않는다.
 
-## 10. Supabase 저장과 후속 인증
+## 10. Supabase 데이터 접근과 관리자 인증
 
-| 예정 사항 | 현재 상태 |
+| 영역 | 현재 상태와 목표 |
 | --- | --- |
-| 카카오 회원가입·로그인 | 후속 요구사항으로만 기록 |
-| 네이버 회원가입·로그인 | 후속 요구사항으로만 기록 |
-| Supabase 저장 | 테스트 DB의 RLS·권한, `.env.local` 연결, 가져오기와 실제 CRUD 검증 완료. Production target 분리 검증은 구현했으며, 별도 운영 DB 환경변수·migration·운영 자료 준비가 남아 있음 |
-| 로그인 UI·세션·콜백·회원 모델 | 설계·구현 보류 |
-| 회원 전용 권한·교육/지원 이력 | 제품 범위 미확정 |
+| 테스트·운영 Supabase | 테스트 프로젝트 `https://vmhydtjwvfyedxfloqhn.supabase.co`는 `.env.local`에서 사용하며 migration·RLS·가져오기·CRUD 검증을 완료했다. 운영 프로젝트 `https://nskeltlthbqlxxaubbom.supabase.co`에도 schema/RLS를 적용했고 Vercel Production에 운영 URL·Secret key·`SUPABASE_DATA_TARGET=production`을 설정했다. 공개·확인된 지점 8곳은 Production `/salon`에서 조회된다. |
+| 현재 DB 권한 | `20261002130000_create_mayone_managed_data.sql`은 RLS를 켜고 `anon`·`authenticated` 권한을 회수한다. 현재 서버 공개 조회와 테스트 관리자 CRUD는 Secret key를 사용하므로 관리자 JWT/RLS 검증 완료가 아니다. FE-T41에서 관리자 CRUD의 Secret key 사용을 제거한다. |
+| Preview | Vercel Preview 환경변수는 아직 없다. 인증·RLS 작업 검증 전에 Preview에 테스트 프로젝트 URL·Secret key·`SUPABASE_DATA_TARGET=test`를 분리 설정하고 Production과 데이터가 섞이지 않는지 확인한다. |
+| 공개 정보 조회 | 현재 `/salon`은 서버 Secret key 또는 체크인 fallback에서 조회한 뒤 공개·검토 완료된 행과 허용된 공개 필드만 반환한다. 정적 실제 교육과 mock 카탈로그는 별도 조회다. FE-T41의 목표는 `anon`·비관리자 `authenticated`에 동일한 공개 SELECT/projection을 제공하는 것이다. |
+| 공개 신청 | 현재 `/haru/apply`와 `/api/mock-enrollments`는 개발/Preview 시연만 지원한다. 실제 비회원 신청 API·개인정보 동의·남용 방지·중복 저장 억제는 FE-T42 미구현이며 Production 신청은 비활성이다. |
+| 관리자 계정 | 일반 회원가입을 끄고, 운영자가 초대한 관리자 2~3명만 Supabase Auth에 둔다. 서버 전용 `ADMIN_EMAIL_ALLOWLIST`가 허용된 이메일을 결정하며 이메일·비밀번호로 로그인한다. 별도 2단계 인증, 카카오·네이버 소셜 로그인과 일반 사용자 계정은 이번 범위가 아니다. |
+| 관리자 권한 | 서버의 모든 `/admin` 요청과 관리자 API/Server Action이 Supabase Auth 세션과 서버 이메일 허용 목록을 확인한다. 현재 DB는 브라우저 역할을 전면 차단하며 서버 어댑터가 테스트 CRUD를 수행한다. 관리자 자격을 검사하는 JWT/RLS 정책은 FE-T41에서 구현한다. Production 변경 API는 이 전환의 검증 전까지 503으로 차단한다. 허용 목록 변경은 신뢰된 배포 환경 설정에서만 한다. |
+| Production 데이터 | `mayone_branches`에는 공개·확인된 지점 8곳이 있다. `mayone_class_offers`, `mayone_enrollments`는 비어 있고 실제 접수는 꺼져 있다. 승인된 과정과 개인정보·보존·접수 절차가 준비되면 실제 신청을 단계적으로 활성화한다. |
 
-- Supabase DB는 콘텐츠 관리와 테스트 신청 저장용이다. 아직 실제 접수용 개인정보 처리·접근 제어를 승인한 것이 아니므로 신청 폼과 관리자 기능은 기존 mock 및 로컬 전용 범위를 유지한다.
-- `supabase/migrations/20261002130000_create_mayone_managed_data.sql`은 세 테이블을 만들고 RLS를 켠다. `anon`·`authenticated`·`public`의 테이블 권한을 회수하고 서버가 보유한 service-role Secret key만 접근하게 한다.
-- `npm run supabase:import-local`은 체크인 지점/과정 카탈로그와 존재하는 로컬 지점·과정·테스트 신청 데이터를 ID 기준으로 가져온다. 원본 파일은 백업용으로 남긴다.
-- 로컬 `.env.local`과 Vercel Preview에는 테스트 프로젝트의 `SUPABASE_URL`·`SUPABASE_SECRET_KEY`·`SUPABASE_DATA_TARGET=test`를 설정한다. Vercel Production에는 운영 프로젝트의 URL·Secret key와 `SUPABASE_DATA_TARGET=production`을 별도 입력하고 migration을 적용한다. 로컬 import 도구는 Production target을 거부한다.
-- Supabase Secret key가 없으면 로컬 개발은 CSV/JSON fallback을 사용한다. Production/Preview 환경에서 Supabase를 쓰려면 Vercel server environment에 URL과 비밀 key를 따로 설정하고 재배포해야 한다.
-- 이 작업은 Supabase Auth, 카카오·네이버 소셜 앱 등록, OAuth, 회원 모델, 회원 전용 권한·이력을 구현하지 않는다.
-- 모든 공개 콘텐츠와 외부 행동은 비회원으로 이용할 수 있게 구현한다.
-- 추후 착수할 때 공급자별 지원 여부와 연동 방법을 공식 문서로 확인한다. 특히 네이버와 카카오가 후보 서비스에서 같은 방식으로 지원된다고 전제하지 않는다.
-- 이번에 필요한 확장 준비는 UI와 콘텐츠 조회의 분리뿐이다. 사용하지 않는 인증 추상화나 가짜 회원 상태를 미리 만들지 않는다.
+다음 표는 FE-T41~FE-T42 완료 후의 목표 권한이다. 현재 정책의 완료 상태로 읽지 않는다.
+
+| 주체 | 공개 지점·과정 | 신청자 데이터 | 관리 데이터 변경 |
+| --- | --- | --- | --- |
+| 비회원 `anon` | 공개 행과 공개 컬럼만 읽기 | 직접 접근 불가; 신청 API 제출만 가능 | 불가 |
+| 로그인된 비관리자 `authenticated` | 비회원과 같은 공개 조회 | 접근 불가 | 불가 |
+| 허용 목록 관리자 `authenticated` | 공개·관리 데이터 조회 | 조회·수정·삭제 | 지점·과정 CRUD |
+| 신청 API 서버 | 해당 없음 | 검증된 새 신청만 기록 | 불가 |
+
+- `anon`과 `authenticated`에는 `mayone_branches`·`mayone_class_offers`의 동일한 공개 데이터 SELECT 정책을 제공해 관리자 로그인 상태가 공개 페이지에 영향을 주지 않게 한다. PostgreSQL RLS는 행을 제한하고 컬럼을 감추지 않으므로, 비공개 필드는 공개 컬럼별 SELECT grants 또는 안전한 public projection으로 제외한다. `mayone_enrollments`는 `anon`과 허용되지 않은 `authenticated`의 SELECT/UPDATE/DELETE/INSERT를 모두 차단한다. 허용된 관리자 세션의 조회·변경만 별도 RLS 정책으로 승인한다. 신청 API만 서버에서 정해진 삽입을 수행하며 신청자의 입력 데이터나 관리자 키를 응답에 넣지 않는다.
+- `ADMIN_EMAIL_ALLOWLIST`는 개발·Preview의 서버 전용 변수로 두고 클라이언트 번들에 포함하지 않는다. Production은 `mayone_admin_emails`를 서버 인증과 `private.is_mayone_admin()` RLS 함수의 단일 권한 기준으로 사용한다. `mayone_admin_users`는 기존 식별자 기반 설계 이력이며 현재 Production 권한 판정에는 사용하지 않는다.
+- 관리자 페이지와 각 Route Handler는 서버에서 Supabase Auth 세션과 이메일 허용 목록을 검사한다. 이메일을 허용 목록에서 제거하거나 Auth 계정을 비활성화하면 새 요청부터 관리 권한이 없어야 한다.
+- `npm run supabase:import-local`은 체크인 지점/과정 카탈로그와 존재하는 로컬 지점·과정·테스트 신청 데이터를 ID 기준으로 가져온다. 원본 파일은 백업용으로 남기고 운영 target import는 거부한다.
+- `.env.local`에는 테스트 프로젝트의 server-only `SUPABASE_URL`·`SUPABASE_SECRET_KEY`·`SUPABASE_DATA_TARGET=test`·`ADMIN_EMAIL_ALLOWLIST`와 브라우저용 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`를 둔다. Vercel Production에는 운영 URL·Secret key·`SUPABASE_DATA_TARGET=production`과 Production Auth URL·publishable key를 설정한다. 허용 이메일은 Production `mayone_admin_emails`에서 관리한다. Vercel Preview Auth/DB 환경은 별도 검증 전까지 미설정이다. 테스트·운영 Supabase의 일반 가입은 끄고, Auth redirect allowlist에 각각 로컬 callback 및 운영 `https://mayone-home.vercel.app/auth/callback`을 허용한다. Secret key는 `.env.example`, Git, 브라우저 번들, 공개 API 응답, 로그에 기록하지 않는다.
+- 모든 공개 콘텐츠와 외부 행동은 비회원으로 이용할 수 있다. 관리자 인증은 `/admin` 경로에만 적용하며, 일반 방문자의 공개 페이지 조회와 신청 흐름은 로그인 상태에 의존하지 않는다.
 
 ## 11. 미확정 자료와 결정 항목
 
 | 항목 | 현재 상태 | 영향과 처리 |
 | --- | --- | --- |
 | 공식 로고·대표 사진 | 원본 확보 필요 | Preview는 원본 HTML의 CSS 기반 visual 패널을 비사진형 시안으로 사용; 공개 전 공식 에셋 적용 |
-| 12개 지점 후보 | 명칭만 원고에 있음 | 운영 여부·공식명·주소 확인 후 공개; 지역 추정 금지 |
-| 지점 예약·디자이너·스타일 | 미제공 | 예약 비활성, 확인된 정보만 상세에 반영 |
-| 교육·강사진·접수 | 실제 일정·가격·신청 처리 자료 미제공. 현재 mock 과정·테스트 신청은 Supabase에 저장할 기반을 준비 중 | Production에서는 실제 모집 자료·개인정보 안내·접수 저장/전달 절차 확인 전까지 준비 상태 유지 |
+| 지점 후보 | 공개·확인 지점 8곳은 기존 운영 DB/배포에 반영됨; 나머지 후보는 미확인 | 나머지는 운영 여부·공식명·주소 확인 후 공개; 지역 추정 금지 |
+| 지점 예약·디자이너·스타일 | 공개 지점 8곳의 방문 정보·네이버 예약 링크 적용; 실제 사진·디자이너·스타일 미확보 | 확인된 지점 예약만 활성; 상세 페이지는 자료 확보 전 404 |
+| 교육·강사진·접수 | 실제 일정·가격·신청 처리 자료 미제공. 개발용 mock 과정·테스트 신청은 테스트 Supabase에 저장하며, 키 미설정 로컬은 CSV fallback을 사용한다. 운영 DB에는 과정·신청 자료가 없다 | Production에서는 실제 모집 자료·개인정보 안내·접수 저장/전달 절차 확인 전까지 준비 상태 유지 |
 | 채용공고·지원 | 미제공 | 공고 등록 여부 확인, 지원 수단 확보 후 활성화 |
 | 산학협력·기관 사례 | 프로그램 원고 있음, 채널·현재 협력 공개 범위 미확정 | 소개 구현, 문의와 사례는 확인 후 공개 |
 | HARU 주소·SNS | PDF 후보값 있음 | 현재 주소·계정 URL 확인 후 공개 |
 | 연혁·성과 숫자 | 원본 홈페이지 범위 밖, 원자료 간 기준 차이 있음 | 이번 랜딩에서 제외. 별도 확정·승인 전 공개 카피에 추가하지 않음 |
-| 마켓 링크 | 원자료에 2개 제공 | 목적지·판매 상태를 공개 전 확인 |
+| 마켓 링크 | 공식 SmartStore 주소 반영; 대표 상품 목적지 미확인 | 스토어 실제 접속 검수는 대기; 대표 상품 CTA 비활성 |
 | 푸터 운영정보·정책·연락처 | 미제공 | 브랜드 공개 전 실제 자료 확보 |
 | 공식 도메인·Git/Vercel 프로젝트 | GitHub `TeusEE/mayone_web`의 `main`에 코드 push 완료; Vercel `mayone-home` Production은 `https://mayone-home.vercel.app`에서 제공. 별도 공식 도메인과 Vercel Git 자동 배포 연동은 미설정 | 기본 Vercel URL을 공식 도메인으로 간주하지 않는다. 공식 도메인 확정 후 canonical·사이트맵을 설정하고, Git 자동 배포 연동을 별도 완료한다. 현재 공개·배포 내역은 `fe-task.md` 참조 |
 

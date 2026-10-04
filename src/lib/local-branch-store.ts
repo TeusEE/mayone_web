@@ -1,10 +1,8 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { withFileWriteLock, writeFileAtomically } from "@/lib/local-file-store";
+import { readFile } from "node:fs/promises";
 import { isValidExternalUrl } from "@/lib/actions";
 import type { Branch } from "@/types/content";
 
-const writeQueues = new Map<string, Promise<void>>();
 const branchIdPattern = /^[a-z0-9][a-z0-9-]{1,99}$/u;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -84,28 +82,7 @@ async function readCatalog(filePath: string, fallback: readonly Branch[]): Promi
 }
 
 async function writeCatalog(filePath: string, branches: readonly Branch[]): Promise<void> {
-  await mkdir(dirname(filePath), { recursive: true });
-  const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
-
-  try {
-    await writeFile(temporaryPath, `${JSON.stringify({ version: 1, branches }, null, 2)}\n`, "utf8");
-    await rename(temporaryPath, filePath);
-  } finally {
-    await rm(temporaryPath, { force: true });
-  }
-}
-
-async function withWriteLock<T>(filePath: string, operation: () => Promise<T>): Promise<T> {
-  const previous = writeQueues.get(filePath) ?? Promise.resolve();
-  const current = previous.catch(() => undefined).then(operation);
-  const queueTail = current.then(() => undefined, () => undefined);
-  writeQueues.set(filePath, queueTail);
-
-  try {
-    return await current;
-  } finally {
-    if (writeQueues.get(filePath) === queueTail) writeQueues.delete(filePath);
-  }
+  await writeFileAtomically(filePath, `${JSON.stringify({ version: 1, branches }, null, 2)}\n`);
 }
 
 export async function readLocalBranchCatalog(filePath: string, fallback: readonly Branch[]): Promise<Branch[]> {
@@ -113,7 +90,7 @@ export async function readLocalBranchCatalog(filePath: string, fallback: readonl
 }
 
 export async function createLocalBranch(filePath: string, fallback: readonly Branch[], branch: Branch): Promise<boolean> {
-  return withWriteLock(filePath, async () => {
+  return withFileWriteLock(filePath, async () => {
     const branches = await readCatalog(filePath, fallback);
     if (branches.some((candidate) => candidate.id === branch.id)) return false;
     await writeCatalog(filePath, [...branches, branch]);
@@ -122,7 +99,7 @@ export async function createLocalBranch(filePath: string, fallback: readonly Bra
 }
 
 export async function updateLocalBranch(filePath: string, fallback: readonly Branch[], branchId: string, branch: Branch): Promise<boolean> {
-  return withWriteLock(filePath, async () => {
+  return withFileWriteLock(filePath, async () => {
     const branches = await readCatalog(filePath, fallback);
     const index = branches.findIndex((candidate) => candidate.id === branchId);
     if (index === -1) return false;
@@ -135,7 +112,7 @@ export async function updateLocalBranch(filePath: string, fallback: readonly Bra
 }
 
 export async function deleteLocalBranch(filePath: string, fallback: readonly Branch[], branchId: string): Promise<boolean> {
-  return withWriteLock(filePath, async () => {
+  return withFileWriteLock(filePath, async () => {
     const branches = await readCatalog(filePath, fallback);
     const remaining = branches.filter((branch) => branch.id !== branchId);
     if (remaining.length === branches.length) return false;

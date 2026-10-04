@@ -3,22 +3,27 @@ import { MockClassOffersDirectory } from "@/components/haru/MockClassOffersDirec
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { getMockClassOffers, isMockEnrollmentAvailable } from "@/content/mock-class-offers";
-import { getClassCollectionState, getPublicClasses, getPublicInstructors } from "@/content/queries";
+import { getClassCollectionState, getPublicAcademyClassesForPage, getPublicInstructors } from "@/content/queries";
 import { createPageMetadata } from "@/lib/seo";
 import styles from "@/app/content-pages.module.css";
 
-export function generateMetadata() {
+export const dynamic = "force-dynamic";
+
+export async function generateMetadata() {
+  const classes = await getPublicAcademyClassesForPage();
   return createPageMetadata({
     title: "HARU 교육 일정",
     description: "공개가 확인된 교육의 분야, 일정, 장소, 비용과 모집 상태를 안내합니다.",
     path: "/haru/classes",
-    contentAvailable: getPublicClasses().length > 0,
+    contentAvailable: classes.length > 0,
   });
 }
 
 export default async function ClassDirectoryPage() {
-  const classes = getPublicClasses();
-  const collectionState = getClassCollectionState();
+  const classes = await getPublicAcademyClassesForPage();
+  const collectionState = process.env.VERCEL_ENV === "production"
+    ? (classes.length > 0 ? "available" : "empty")
+    : getClassCollectionState();
   const instructorIds = new Set(classes.flatMap((item) => item.instructorIds));
   const instructors = getPublicInstructors().filter((instructor) => instructorIds.has(instructor.id));
   const demoEnabled = isMockEnrollmentAvailable();

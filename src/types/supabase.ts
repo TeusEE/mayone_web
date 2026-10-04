@@ -27,12 +27,44 @@ type StoredRecordTable = {
   Relationships: [];
 };
 
+type AdminUserRow = {
+  user_id: string;
+  created_at: string;
+};
+
+type AdminUserInsert = {
+  user_id: string;
+  created_at?: string;
+};
+
+type AdminEmailRow = {
+  email: string;
+  created_at: string;
+};
+
+type AdminEmailInsert = {
+  email: string;
+  created_at?: string;
+};
+
 export type Database = {
   public: {
     Tables: {
       mayone_branches: StoredRecordTable;
       mayone_class_offers: StoredRecordTable;
       mayone_enrollments: StoredRecordTable;
+      mayone_admin_users: {
+        Row: AdminUserRow;
+        Insert: AdminUserInsert;
+        Update: never;
+        Relationships: [];
+      };
+      mayone_admin_emails: {
+        Row: AdminEmailRow;
+        Insert: AdminEmailInsert;
+        Update: Partial<AdminEmailInsert>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

@@ -1,0 +1,15 @@
+# Upload application sources only; deployment settings supply production secrets.
+.env*
+/.local-data/
+/origin_source/
+/docs/
+/scripts/
+/supabase/
+/.playwright-mcp/
+/.next/
+/node_modules/
+/.git/
+/.vercel/
+.DS_Store
+*.log
+*.tsbuildinfo

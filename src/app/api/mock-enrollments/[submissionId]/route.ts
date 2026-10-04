@@ -1,8 +1,8 @@
+import { jsonResponse, readJsonRequestBody } from "@/lib/http";
 import { join } from "node:path";
-import { isMockEnrollmentCsvStorageAvailable } from "@/content/mock-class-offers";
 import { deleteMockEnrollmentCsv, updateMockEnrollmentCsv, type MockEnrollmentEditableValues } from "@/lib/mock-enrollment-csv";
-import { isLocalAdminHost } from "@/lib/local-admin";
-import { deleteSupabaseEnrollment, hasSupabaseStorageConfiguration, isSupabaseStorageConfigured, updateSupabaseEnrollment } from "@/lib/supabase-storage";
+import { checkAdminApiRequest } from "@/lib/admin-auth";
+import { deleteSupabaseEnrollment, hasSupabaseStorageConfiguration, updateSupabaseEnrollment } from "@/lib/supabase-storage";
 
 export const runtime = "nodejs";
 
@@ -17,46 +17,13 @@ const fieldLimits = {
 
 type EditableField = keyof typeof fieldLimits;
 
-function jsonResponse(body: Record<string, unknown>, status: number): Response {
-  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-}
-
-function authorizeLocalMutation(request: Request, requiresJson: boolean): Response | null {
-  if (!isMockEnrollmentCsvStorageAvailable() || !isLocalAdminHost(request.headers.get("host"))) {
-    return jsonResponse({ message: "로컬 개발 서버에서만 사용할 수 있습니다." }, 404);
-  }
-
-  const requestOrigin = request.headers.get("origin");
-  if (!requestOrigin || requestOrigin !== new URL(request.url).origin) {
-    return jsonResponse({ message: "요청 출처를 확인할 수 없습니다." }, 403);
-  }
-
-  if (requiresJson && !request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
-    return jsonResponse({ message: "JSON 형식으로 제출해 주세요." }, 415);
-  }
-
-  return null;
-}
-
 async function readEditableValues(request: Request): Promise<
   | { values: MockEnrollmentEditableValues; errors: Partial<Record<EditableField, string>> }
   | { response: Response }
 > {
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
-    return { response: jsonResponse({ message: "수정 내용이 너무 큽니다." }, 413) };
-  }
-
-  let body: unknown;
-  try {
-    const bodyText = await request.text();
-    if (new TextEncoder().encode(bodyText).byteLength > MAX_REQUEST_BYTES) {
-      return { response: jsonResponse({ message: "수정 내용이 너무 큽니다." }, 413) };
-    }
-    body = JSON.parse(bodyText);
-  } catch {
-    return { response: jsonResponse({ message: "수정 내용을 읽을 수 없습니다." }, 400) };
-  }
+  const parsed = await readJsonRequestBody(request, MAX_REQUEST_BYTES);
+  if (parsed.response) return { response: parsed.response };
+  const body = parsed.body;
 
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     return { response: jsonResponse({ message: "수정할 신청 정보를 확인해 주세요." }, 400) };
@@ -101,7 +68,7 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ submissionId: string }> },
 ): Promise<Response> {
-  const authorizationError = authorizeLocalMutation(request, true);
+  const authorizationError = await checkAdminApiRequest(request, true);
   if (authorizationError) return authorizationError;
 
   const { submissionId } = await context.params;
@@ -114,10 +81,7 @@ export async function PATCH(
   }
 
   try {
-    if (hasSupabaseStorageConfiguration() && !isSupabaseStorageConfigured()) {
-      return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
-    }
-    const updated = isSupabaseStorageConfigured()
+    const updated = hasSupabaseStorageConfiguration()
       ? await updateSupabaseEnrollment(submissionId, parsed.values)
       : await updateMockEnrollmentCsv(join(process.cwd(), ".local-data", "mock-enrollments.csv"), submissionId, parsed.values);
     return updated
@@ -132,17 +96,14 @@ export async function DELETE(
   request: Request,
   context: { params: Promise<{ submissionId: string }> },
 ): Promise<Response> {
-  const authorizationError = authorizeLocalMutation(request, false);
+  const authorizationError = await checkAdminApiRequest(request, false);
   if (authorizationError) return authorizationError;
 
   const { submissionId } = await context.params;
   if (!isSubmissionId(submissionId)) return jsonResponse({ message: "신청 기록을 찾을 수 없습니다." }, 404);
 
   try {
-    if (hasSupabaseStorageConfiguration() && !isSupabaseStorageConfigured()) {
-      return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
-    }
-    const deleted = isSupabaseStorageConfigured()
+    const deleted = hasSupabaseStorageConfiguration()
       ? await deleteSupabaseEnrollment(submissionId)
       : await deleteMockEnrollmentCsv(join(process.cwd(), ".local-data", "mock-enrollments.csv"), submissionId);
     return deleted

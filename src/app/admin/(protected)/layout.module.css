@@ -11,10 +11,13 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-5);
+  flex-wrap: wrap;
+  padding-block: var(--space-3);
 }
 
 .brand {
   display: inline-flex;
+  min-height: 2.75rem;
   flex: 0 0 auto;
   align-items: center;
   gap: var(--space-3);
@@ -41,7 +44,7 @@
 
 .navigation nav a {
   display: inline-flex;
-  min-height: 2.7rem;
+  min-height: 2.75rem;
   padding: 0.55rem 0.8rem;
   align-items: center;
   color: var(--color-text-secondary);
@@ -51,10 +54,32 @@
 }
 
 .navigation nav a:hover,
-.navigation nav a:focus-visible {
+.navigation nav a:focus-visible,
+.navigation nav a[aria-current="page"] {
   color: var(--color-text);
   background: var(--color-page);
 }
+
+.signOut {
+  min-height: 2.75rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-input);
+  background: var(--color-page);
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.signOut:hover,
+.signOut:focus-visible { color: var(--color-text); border-color: var(--color-text); }
+.signOut:disabled { opacity: 0.6; cursor: wait; }
+.account { display: grid; gap: var(--space-1); margin-left: auto; }
+.email { max-width: 22rem; color: var(--color-text-secondary); font-size: 0.75rem; overflow-wrap: anywhere; }
+.accountActions { display: flex; align-items: start; gap: var(--space-3); }
+.accountActions > a { display: inline-flex; min-height: 2.75rem; align-items: center; color: var(--color-text-secondary); font-size: 0.8rem; text-underline-offset: 0.2em; }
 
 @media (max-width: 42rem) {
   .navigation {
@@ -63,6 +88,9 @@
     flex-direction: column;
     gap: var(--space-2);
   }
+
+  .signOut { align-self: flex-end; }
+  .account { width: 100%; margin-left: 0; }
 
   .navigation nav {
     width: 100%;

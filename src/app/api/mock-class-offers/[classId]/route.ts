@@ -1,8 +1,9 @@
+import { jsonResponse, readJsonRequestBody } from "@/lib/http";
 import { join } from "node:path";
-import { checkLocalAdminMutationRequest } from "@/lib/local-admin-mutation";
+import { checkAdminApiRequest } from "@/lib/admin-auth";
 import { parseAdminMockClassOfferInput } from "@/lib/admin-mock-class-offer-input";
 import { deleteMockClassOffer, updateMockClassOffer } from "@/lib/mock-class-offer-store";
-import { deleteSupabaseClassOffer, getSupabaseClassOffers, hasSupabaseStorageConfiguration, isSupabaseStorageConfigured, updateSupabaseClassOffer } from "@/lib/supabase-storage";
+import { deleteSupabaseClassOffer, hasSupabaseStorageConfiguration, updateSupabaseClassOffer } from "@/lib/supabase-storage";
 
 export const runtime = "nodejs";
 
@@ -11,29 +12,14 @@ const localCatalogPath = join(process.cwd(), ".local-data", "mock-class-offers.c
 const fixtureCatalogPath = join(process.cwd(), "src/content/fixtures/class-offers.csv");
 const classIdPattern = /^[a-z0-9][a-z0-9-]{1,99}$/u;
 
-function jsonResponse(body: Record<string, unknown>, status: number): Response {
-  return Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-}
-
 async function readOfferInput(request: Request): Promise<{ input?: unknown; response?: Response }> {
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_REQUEST_BYTES) {
-    return { response: jsonResponse({ message: "수강 과목 정보가 너무 큽니다." }, 413) };
+  const parsed = await readJsonRequestBody(request, MAX_REQUEST_BYTES);
+  if (parsed.response) return { response: parsed.response };
+  const body = parsed.body;
+  if (typeof body !== "object" || body === null || Array.isArray(body) || !("offer" in body)) {
+    return { response: jsonResponse({ message: "수강 과목 정보를 확인해 주세요." }, 400) };
   }
-
-  try {
-    const bodyText = await request.text();
-    if (new TextEncoder().encode(bodyText).byteLength > MAX_REQUEST_BYTES) {
-      return { response: jsonResponse({ message: "수강 과목 정보가 너무 큽니다." }, 413) };
-    }
-    const body: unknown = JSON.parse(bodyText);
-    if (typeof body !== "object" || body === null || Array.isArray(body) || !("offer" in body)) {
-      return { response: jsonResponse({ message: "수강 과목 정보를 확인해 주세요." }, 400) };
-    }
-    return { input: body.offer };
-  } catch {
-    return { response: jsonResponse({ message: "수강 과목 정보를 읽지 못했습니다." }, 400) };
-  }
+  return { input: body.offer };
 }
 
 async function readClassId(context: { params: Promise<{ classId: string }> }): Promise<string> {
@@ -45,7 +31,7 @@ export async function PUT(
   request: Request,
   context: { params: Promise<{ classId: string }> },
 ): Promise<Response> {
-  const authorizationError = checkLocalAdminMutationRequest(request, true);
+  const authorizationError = await checkAdminApiRequest(request, true);
   if (authorizationError) return authorizationError;
 
   const classId = await readClassId(context);
@@ -60,17 +46,14 @@ export async function PUT(
 
   try {
     const useSupabase = hasSupabaseStorageConfiguration();
-    if (useSupabase && !isSupabaseStorageConfigured()) return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
     const updated = useSupabase
-      ? (await getSupabaseClassOffers()).some((offer) => offer.id === classId)
-        ? await updateSupabaseClassOffer(classId, parsedOffer.offer)
-        : false
+      ? await updateSupabaseClassOffer(classId, parsedOffer.offer)
       : await updateMockClassOffer(localCatalogPath, fixtureCatalogPath, classId, parsedOffer.offer);
     return updated
       ? jsonResponse({ ok: true }, 200)
       : jsonResponse({ message: "수강 과목을 찾을 수 없습니다." }, 404);
   } catch {
-    return jsonResponse({ message: "로컬 과목 CSV를 수정하지 못했습니다. CSV 형식과 저장 경로를 확인해 주세요." }, 500);
+    return jsonResponse({ message: "과목 정보를 수정하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 500);
   }
 }
 
@@ -78,7 +61,7 @@ export async function DELETE(
   request: Request,
   context: { params: Promise<{ classId: string }> },
 ): Promise<Response> {
-  const authorizationError = checkLocalAdminMutationRequest(request, false);
+  const authorizationError = await checkAdminApiRequest(request, false);
   if (authorizationError) return authorizationError;
 
   const classId = await readClassId(context);
@@ -86,7 +69,6 @@ export async function DELETE(
 
   try {
     const useSupabase = hasSupabaseStorageConfiguration();
-    if (useSupabase && !isSupabaseStorageConfigured()) return jsonResponse({ message: "Supabase 환경변수를 확인해 주세요." }, 503);
     const deleted = useSupabase
       ? await deleteSupabaseClassOffer(classId)
       : await deleteMockClassOffer(localCatalogPath, fixtureCatalogPath, classId);
@@ -94,6 +76,6 @@ export async function DELETE(
       ? jsonResponse({ ok: true }, 200)
       : jsonResponse({ message: "수강 과목을 찾을 수 없습니다." }, 404);
   } catch {
-    return jsonResponse({ message: "로컬 과목 CSV를 삭제하지 못했습니다. CSV 형식과 저장 경로를 확인해 주세요." }, 500);
+    return jsonResponse({ message: "과목 정보를 삭제하지 못했습니다. 잠시 후 다시 시도해 주세요." }, 500);
   }
 }

@@ -1,13 +1,10 @@
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { isMockEnrollmentCsvStorageAvailable } from "@/content/mock-class-offers";
 import EnrollmentCourseGroup from "@/components/admin/EnrollmentCourseGroup";
-import { isLocalAdminHost } from "@/lib/local-admin";
 import { groupMockEnrollmentRecordsByCourse, type MockEnrollmentCourseGroup } from "@/lib/mock-enrollment-csv";
 import { getMockEnrollmentRecords } from "@/content/mock-enrollments";
 import { isSupabaseStorageConfigured } from "@/lib/supabase-storage";
+import { requireAdminPage } from "@/lib/admin-auth";
 import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
@@ -19,9 +16,9 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminEnrollmentsPage() {
+  await requireAdminPage();
   const usingSupabase = isSupabaseStorageConfigured();
-  const requestHeaders = await headers();
-  if (!isMockEnrollmentCsvStorageAvailable() || !isLocalAdminHost(requestHeaders.get("host"))) notFound();
+  const productionReadOnly = process.env.VERCEL_ENV === "production";
 
   let courseGroups: MockEnrollmentCourseGroup[] = [];
   let readFailed = false;
@@ -36,9 +33,9 @@ export default async function AdminEnrollmentsPage() {
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
-        <p className={styles.eyebrow}>MAY.ONE · LOCAL ADMIN</p>
+        <p className={styles.eyebrow}>MAY.ONE · ADMINISTRATION</p>
         <h1>수강 신청자</h1>
-        <p>테스트 제출 데이터를 확인합니다. 실제 수강 신청이나 접수 내역이 아닙니다.</p>
+        <p>{productionReadOnly ? "운영 접수는 준비 중입니다. 현재 데이터는 조회만 가능하며 변경 기능은 DB 권한 검증 후 제공합니다." : "테스트 제출 데이터를 확인합니다. 실제 수강 신청이나 접수 내역이 아닙니다."}</p>
         <div className={styles.headerLinks}>
           <Link href="/haru/apply">신청 화면</Link>
           <a href="/admin/enrollments">새로고침</a>
@@ -46,8 +43,8 @@ export default async function AdminEnrollmentsPage() {
       </header>
 
       <aside className={styles.localNotice}>
-        <strong>{usingSupabase ? "Supabase 테스트 데이터" : "로컬 전용 테스트 화면"}</strong>
-        <p>{usingSupabase ? "신청 기록은 서버에서 Supabase에 저장·조회하며 브라우저에 데이터베이스 키를 보내지 않습니다." : <><code>.local-data/mock-enrollments.csv</code> 파일을 읽습니다. 데이터는 이 컴퓨터의 개발 서버에만 있고 Git에는 포함되지 않습니다.</>}</p>
+        <strong>{usingSupabase ? "Supabase 신청 데이터" : "로컬 테스트 데이터"}</strong>
+        <p>{usingSupabase ? "신청 기록은 서버에서 Supabase에 저장·조회하며 브라우저에 데이터베이스 키를 보내지 않습니다." : <><code>.local-data/mock-enrollments.csv</code> 파일을 읽습니다. 이 파일 기반 데이터는 개발 서버에서만 확인할 수 있습니다.</>}</p>
       </aside>
 
       {readFailed ? (
@@ -64,14 +61,14 @@ export default async function AdminEnrollmentsPage() {
 
           {recordCount > 0 ? (
             <div className={styles.courseGroups}>
-              {courseGroups.map((group) => <EnrollmentCourseGroup key={group.classId} group={group} />)}
+              {courseGroups.map((group) => <EnrollmentCourseGroup key={group.classId} group={group} readOnly={productionReadOnly} />)}
             </div>
           ) : (
             <div className={styles.emptyState}>
               <p className={styles.sectionEyebrow}>NO TEST SUBMISSIONS</p>
-              <h3>아직 제출된 테스트 신청이 없습니다.</h3>
-              <p>신청 화면에서 임의의 테스트 값으로 제출하면 이곳에서 확인할 수 있습니다.</p>
-              <Link href="/haru/apply">테스트 신청 화면으로 이동 <span aria-hidden="true">→</span></Link>
+              <h3>{productionReadOnly ? "아직 접수된 신청이 없습니다." : "아직 제출된 테스트 신청이 없습니다."}</h3>
+              <p>{productionReadOnly ? "실제 과정과 개인정보 안내, 접수 절차를 확정한 뒤 신청을 제공합니다." : "신청 화면에서 임의의 테스트 값으로 제출하면 이곳에서 확인할 수 있습니다."}</p>
+              {!productionReadOnly ? <Link href="/haru/apply">테스트 신청 화면으로 이동 <span aria-hidden="true">→</span></Link> : null}
             </div>
           )}
         </section>

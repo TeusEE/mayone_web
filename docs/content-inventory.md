@@ -1,6 +1,7 @@
 # MAY.ONE 홈페이지 콘텐츠·자료 현황
 
-- 기준일: 2026-09-28
+- 기준일: 2026-09-28 (운영 자료 확인 기록)
+- 최근 코드 정합성 점검: 2026-10-04 — [project-audit.md](./project-audit.md)
 - 기준: `fe-prd.md` §3.3·§11, `origin_source/mayone_homepage.html`, `origin_source/webpage_contents.md`, `origin_source/KakaoTalk_Chat_2026-09-27-18-51-45.txt`, [메이원헤어 소개.pdf](../origin_source/%EB%A9%94%EC%9D%B4%EC%9B%90%ED%97%A4%EC%96%B4%20%EC%86%8C%EA%B0%9C.pdf)
 
 `origin_source/mayone_homepage.html`은 메인·공통 헤더·푸터의 카피와 디자인 기준입니다. `webpage_contents.md`, PDF, 대화 기록은 지점·교육·채용·협력 등 개별 운영자료의 검토 후보로만 사용합니다. 원본 HTML과 다른 추가 랜딩 카피나 구역을 만들지 않습니다.
@@ -51,4 +52,4 @@
 
 2026-09-28 최신 앵커 수정(`55a7765`)에서 `npm run lint`, `npm run typecheck`, `npm run build`와 Vercel Production build가 통과했습니다. 콘텐츠 검증·상태 테스트의 완료 기록은 [fe-task.md](./fe-task.md) FE-T19에 있습니다. 모바일 좌우 여백은 Playwright MCP로 CSS 폭 320, 375, 390px에서 확인했습니다. 같은 `#haru`·`#market` 앵커의 반복 이동은 Preview와 Production의 390×844 모바일에서, Preview의 1280px 데스크톱에서 확인했습니다. Production URL은 HTTP 200으로 응답하며 최신 배포 내용으로 메인 앵커가 동작합니다.
 
-아직 확인할 항목은 768, 1024, 1440px의 전체 화면, 상세·목록의 직접 URL과 404, 외부 CTA의 실제 최종 목적지, 키보드 포커스·Escape·200% 확대·reduced-motion, 이미지와 Lighthouse입니다. 공식 사진·로고·운영 데이터·도메인에 의존하는 항목은 자료 확보 후 진행합니다. 요청에 따라 로컬 개발 서버는 중지 상태이며 3000번 포트에 수신 프로세스가 없는 것을 확인했습니다.
+이 문단은 2026-09-28의 브라우저 QA 기록이다. 2026-10-04에는 코드·규칙·빌드·로컬 HTTP를 별도로 점검했으며 시각/실제 계정/운영 배포 재검증을 대신하지 않는다. 아직 확인할 항목은 768, 1024, 1440px의 전체 화면, 상세·목록의 직접 URL과 404, 외부 CTA의 실제 최종 목적지, 키보드 포커스·Escape·200% 확대·reduced-motion, 이미지와 Lighthouse입니다. 공식 사진·로고·운영 데이터·도메인에 의존하는 항목은 자료 확보 후 진행합니다. 요청에 따라 로컬 개발 서버는 중지 상태이며 3000번 포트에 수신 프로세스가 없는 것을 확인했습니다.

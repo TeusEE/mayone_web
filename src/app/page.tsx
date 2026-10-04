@@ -1,4 +1,5 @@
 import { HomeLanding } from "@/components/sections/HomeLanding";
+import { AdminAuthLinkHandler } from "@/components/admin/AdminAuthLinkHandler";
 import { getPublicBrandCopy } from "@/content/queries";
 import { createPageMetadata } from "@/lib/seo";
 
@@ -13,5 +14,5 @@ export function generateMetadata() {
 }
 
 export default function HomePage() {
-  return <HomeLanding />;
+  return <><AdminAuthLinkHandler publicEntry /><HomeLanding /></>;
 }

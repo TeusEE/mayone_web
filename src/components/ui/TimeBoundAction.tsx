@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { MouseEvent } from "react";
-import { Button, ButtonLink } from "@/components/ui/Button";
+import { Button, ButtonLink, type ButtonVariant } from "@/components/ui/Button";
 
 interface TimeBoundActionProps {
   eligible: boolean;
@@ -10,6 +10,7 @@ interface TimeBoundActionProps {
   expiresAt?: string;
   label: string;
   disabledReason: string;
+  variant?: ButtonVariant;
 }
 
 function isExpired(expiresAt: string | undefined, now: number): boolean {
@@ -24,6 +25,7 @@ export function TimeBoundAction({
   expiresAt,
   label,
   disabledReason,
+  variant = "primary",
 }: TimeBoundActionProps) {
   const [verification, setVerification] = useState<{ key: string; active: boolean } | null>(null);
   const checkKey = `${eligible}:${href ?? ""}:${expiresAt ?? ""}`;
@@ -72,18 +74,19 @@ export function TimeBoundAction({
   };
 
   if (!eligible || !href || !checked || !active) {
-    const message = !checked ? "신청 상태 확인 중" : eligible ? "신청 기간이 종료되었습니다" : disabledReason;
-    return <Button disabled>{message}</Button>;
+    const message = !eligible || !href ? disabledReason : !checked ? "접수 상태 확인 중" : "접수 기간이 종료되었습니다";
+    return <Button disabled variant={variant}>{message}</Button>;
   }
 
   return (
     <ButtonLink
       href={href}
       external
+      variant={variant}
       onClick={blockIfExpired}
       ariaLabel={label}
     >
-      {checked && active ? label : "신청 상태 확인 중"}
+      {label}
     </ButtonLink>
   );
 }

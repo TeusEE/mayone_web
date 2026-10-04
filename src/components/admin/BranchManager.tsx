@@ -52,7 +52,7 @@ function branchStatusLabel(branch: Branch): string {
   return `${publicationLabel} · ${operationLabel}`;
 }
 
-export function BranchManager({ branches }: { branches: readonly Branch[] }) {
+export function BranchManager({ branches, readOnly = false, allowDelete = true }: { branches: readonly Branch[]; readOnly?: boolean; allowDelete?: boolean }) {
   const router = useRouter();
   const [editingBranchId, setEditingBranchId] = useState<string | null>(null);
   const [values, setValues] = useState<AdminBranchInput>(emptyForm);
@@ -150,12 +150,12 @@ export function BranchManager({ branches }: { branches: readonly Branch[] }) {
           <p className={styles.eyebrow}>BRANCH DIRECTORY</p>
           <h2>등록된 지점 <span>{branches.length}</span></h2>
         </div>
-        <button className={styles.primaryButton} type="button" onClick={openCreateForm} disabled={saving || deletingBranchId !== null}>
+        <button className={styles.primaryButton} type="button" onClick={openCreateForm} disabled={readOnly || saving || deletingBranchId !== null}>
           지점 추가 <span aria-hidden="true">＋</span>
         </button>
       </div>
 
-      <p className={styles.helpText}>공개 상태로 저장된 지점은 로컬 개발 서버의 <Link href="/salon">지점 페이지</Link>에 반영됩니다. 변경 내용은 <code>.local-data/branches.json</code>에만 저장됩니다.</p>
+      <p className={styles.helpText}>{readOnly ? "현재 운영 지점 자료는 조회만 가능합니다." : <>공개 및 검토 완료된 지점은 <Link href="/salon">지점 페이지</Link>에 반영됩니다. 확인된 운영 정보만 입력해 주세요.</>}</p>
 
       {message ? <p className={messageIsError ? styles.errorMessage : styles.successMessage} role={messageIsError ? "alert" : "status"}>{message}</p> : null}
 
@@ -232,7 +232,7 @@ export function BranchManager({ branches }: { branches: readonly Branch[] }) {
             </div>
           </div>
 
-          <p className={styles.localNote}>운영 데이터는 이 로컬 개발 서버에서만 편집합니다. 실제 지점 운영 정보로 사용하려면 확인 후 공개 상태로 바꾸세요.</p>
+          <p className={styles.localNote}>저장 내용은 현재 환경의 지점 목록에 반영됩니다. 실제 지점 운영 정보로 사용하려면 확인 후 공개 상태로 바꾸세요.</p>
           <div className={styles.actions}>
             <button className={styles.primaryButton} type="submit" disabled={saving || deletingBranchId !== null}>{saving ? "저장 중…" : "지점 저장"}</button>
             <button className={styles.secondaryButton} type="button" onClick={closeForm} disabled={saving}>취소</button>
@@ -243,7 +243,7 @@ export function BranchManager({ branches }: { branches: readonly Branch[] }) {
       {branches.length === 0 ? (
         <div className={styles.emptyState}>
           <h3>등록된 지점이 없습니다.</h3>
-          <p>지점 정보를 추가하면 로컬 지점 관리 목록에 나타납니다.</p>
+          <p>현재 환경에 등록된 지점 정보가 없습니다.</p>
         </div>
       ) : (
         <ol className={styles.branchList}>
@@ -257,8 +257,8 @@ export function BranchManager({ branches }: { branches: readonly Branch[] }) {
                     <p className={branch.publicationState === "published" ? styles.publishedStatus : styles.draftStatus}>{branchStatusLabel(branch)}</p>
                   </div>
                   <div className={styles.actions}>
-                    <button className={styles.secondaryButton} type="button" onClick={() => openEditForm(branch)} disabled={saving || deletingBranchId !== null}>수정</button>
-                    <button className={styles.dangerButton} type="button" onClick={() => { setConfirmingBranchId(branch.id); setMessage(""); }} disabled={saving || deletingBranchId !== null}>삭제</button>
+                    <button className={styles.secondaryButton} type="button" onClick={() => openEditForm(branch)} disabled={readOnly || saving || deletingBranchId !== null}>수정</button>
+                    {allowDelete ? <button className={styles.dangerButton} type="button" onClick={() => { setConfirmingBranchId(branch.id); setMessage(""); }} disabled={readOnly || saving || deletingBranchId !== null}>삭제</button> : null}
                   </div>
                 </header>
                 <dl className={styles.branchDetails}>
@@ -268,9 +268,9 @@ export function BranchManager({ branches }: { branches: readonly Branch[] }) {
                   {branch.phone ? <div><dt>전화</dt><dd>{branch.phone}</dd></div> : null}
                   {branch.bookingUrl ? <div><dt>예약 URL</dt><dd>{branch.bookingUrl}</dd></div> : null}
                 </dl>
-                {confirmingBranchId === branch.id ? (
+                {allowDelete && confirmingBranchId === branch.id ? (
                   <div className={styles.deleteConfirmation} role="group" aria-label={`${branch.officialName} 삭제 확인`}>
-                    <p>이 지점을 삭제할까요? 공개 상태인 경우 로컬 지점 페이지에서도 사라집니다.</p>
+                    <p>이 지점을 삭제할까요? 공개 상태인 경우 현재 환경의 지점 페이지에서도 사라집니다.</p>
                     <div className={styles.actions}>
                       <button className={styles.dangerButton} type="button" onClick={() => deleteBranch(branch.id)} disabled={deletingBranchId === branch.id}>
                         {deletingBranchId === branch.id ? "삭제 중…" : "삭제 확정"}

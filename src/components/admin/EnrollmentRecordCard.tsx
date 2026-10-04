@@ -33,9 +33,11 @@ function fieldId(submissionId: string, field: EditableField): string {
 export default function EnrollmentRecordCard({
   record,
   groupedCourseTitle,
+  readOnly = false,
 }: {
   record: MockEnrollmentCsvRecord;
   groupedCourseTitle: string;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -231,12 +233,12 @@ export default function EnrollmentRecordCard({
 
       {!editing && (
         <div className={styles.actions}>
-          <button className={styles.secondaryButton} type="button" onClick={startEditing} disabled={deleting}>수정</button>
+          <button className={styles.secondaryButton} type="button" onClick={startEditing} disabled={readOnly || deleting}>수정</button>
           <button
             className={styles.dangerButton}
             type="button"
             onClick={() => { setMessage(""); setConfirmingDelete(true); }}
-            disabled={deleting}
+            disabled={readOnly || deleting}
           >삭제</button>
         </div>
       )}

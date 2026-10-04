@@ -1,5 +1,5 @@
-import { randomUUID } from "node:crypto";
-import { appendFile, mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { withFileWriteLock, writeFileAtomically } from "@/lib/local-file-store";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 
 export const MOCK_ENROLLMENT_CSV_HEADERS = [
@@ -67,7 +67,6 @@ export function groupMockEnrollmentRecordsByCourse(
     .sort((left, right) => Date.parse(right.records[0].submittedAt) - Date.parse(left.records[0].submittedAt));
 }
 
-const writeQueues = new Map<string, Promise<void>>();
 const header = MOCK_ENROLLMENT_CSV_HEADERS.join(",");
 
 function parseCsvRows(csv: string): string[][] {
@@ -233,31 +232,9 @@ async function appendRecord(filePath: string, record: MockEnrollmentCsvRecord): 
   await appendFile(filePath, `${separator}${row}\r\n`, "utf8");
 }
 
-async function withFileWriteLock<T>(filePath: string, operation: () => Promise<T>): Promise<T> {
-  const key = filePath;
-  const previous = writeQueues.get(key) ?? Promise.resolve();
-  const current = previous.catch(() => undefined).then(operation);
-  const queueTail = current.then(() => undefined, () => undefined);
-  writeQueues.set(key, queueTail);
-
-  try {
-    return await current;
-  } finally {
-    if (writeQueues.get(key) === queueTail) writeQueues.delete(key);
-  }
-}
-
 async function writeAllRecords(filePath: string, records: MockEnrollmentCsvRecord[]): Promise<void> {
-  await mkdir(dirname(filePath), { recursive: true });
   const contents = `\uFEFF${header}\r\n${records.map(serializeMockEnrollmentCsvRow).join("\r\n")}${records.length ? "\r\n" : ""}`;
-  const temporaryPath = `${filePath}.${randomUUID()}.tmp`;
-
-  try {
-    await writeFile(temporaryPath, contents, "utf8");
-    await rename(temporaryPath, filePath);
-  } finally {
-    await rm(temporaryPath, { force: true });
-  }
+  await writeFileAtomically(filePath, contents);
 }
 
 export async function appendMockEnrollmentCsv(filePath: string, record: MockEnrollmentCsvRecord): Promise<void> {

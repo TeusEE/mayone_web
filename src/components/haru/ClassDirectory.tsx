@@ -103,7 +103,10 @@ export function ClassDirectory({ classes, instructors }: ClassDirectoryProps) {
       ) : (
         <div className={styles.cardGrid}>
           {filtered.map((item) => {
-            const teacherNames = item.instructorIds.map((id) => instructorById.get(id)?.name).filter((name): name is string => Boolean(name));
+            const teacherNames = [...new Set([
+              ...item.instructorIds.map((id) => instructorById.get(id)?.name).filter((name): name is string => Boolean(name)),
+              ...(item.instructorNames ?? []),
+            ])];
             const locations = [...new Set(item.sessions.map((session) => session.location))];
             return (
               <article className={styles.card} key={item.id}>

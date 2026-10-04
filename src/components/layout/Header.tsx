@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type KeyboardEvent, type MouseEventHandler, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type MouseEvent,
+  type MouseEventHandler,
+  type ReactNode,
+} from "react";
 import styles from "./Header.module.css";
 
 const navigation = [
@@ -165,7 +173,12 @@ function HeaderLink({
 }) {
   if (pathname === "/" && href.startsWith("/#")) {
     return (
-      <a className={className} href={href.slice(1)} aria-label={ariaLabel} onClick={onClick}>
+      <a
+        className={className}
+        href={href.slice(1)}
+        aria-label={ariaLabel}
+        onClick={(event) => handleHomeSectionClick(event, href, onClick)}
+      >
         {children}
       </a>
     );
@@ -176,4 +189,40 @@ function HeaderLink({
       {children}
     </Link>
   );
+}
+
+function handleHomeSectionClick(
+  event: MouseEvent<HTMLAnchorElement>,
+  href: string,
+  onClick?: MouseEventHandler<HTMLAnchorElement>,
+) {
+  onClick?.(event);
+
+  if (
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  ) {
+    return;
+  }
+
+  const sectionId = href.slice(href.indexOf("#") + 1);
+  const section = document.getElementById(sectionId);
+  if (!section) return;
+
+  event.preventDefault();
+
+  if (window.location.hash) {
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${window.location.search}`,
+    );
+  }
+
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  section.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" });
 }

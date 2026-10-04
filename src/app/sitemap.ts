@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import {
   getPublicBrandCopy,
-  getPublicBranches,
-  getPublicClasses,
+  getPublicAcademyClassesForPage,
   getPublicCooperationInstitutions,
   getPublicCooperationPrograms,
   getPublicJobs,
 } from "@/content/queries";
+import { getSalonDirectoryData } from "@/content/local-branches";
 import { getCanonicalSiteUrl, isIndexableDeployment, toSitemapDate } from "@/lib/seo";
 
 function latestDate(values: readonly (string | undefined)[]): Date | undefined {
@@ -16,7 +16,9 @@ function latestDate(values: readonly (string | undefined)[]): Date | undefined {
     .sort((a, b) => b.getTime() - a.getTime())[0];
 }
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const dynamic = "force-dynamic";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const siteUrl = getCanonicalSiteUrl();
   if (!siteUrl || !isIndexableDeployment()) return [];
 
@@ -34,12 +36,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     add("/about", brand.confirmedAt);
   }
 
-  const branches = getPublicBranches();
+  const { branches } = await getSalonDirectoryData();
   if (branches.length > 0) {
     add("/salon", latestDate(branches.map((branch) => branch.confirmedAt))?.toISOString());
   }
 
-  const classes = getPublicClasses();
+  const classes = await getPublicAcademyClassesForPage();
   if (classes.length > 0) {
     add("/haru/classes", latestDate(classes.map((item) => item.confirmedAt))?.toISOString());
     for (const item of classes) add(`/haru/classes/${encodeURIComponent(item.id)}`, item.confirmedAt);
