@@ -113,7 +113,7 @@ Node.js 24에서 타입·미사용 변수 검사, ESLint, Production 빌드를 �
 | 작업 | 남은 조건 |
 | --- | --- |
 | T40 | 실제 계정의 직접 비밀번호 설정, 로그인·로그아웃·허용 해제·세션 만료 검증. 운영 허용 목록·Auth 코드 배포와 기본 HTTP 검증은 아래 배포 기록에서 완료 |
-| T41 | 공개 projection·SELECT 정책, 관리자 JWT/RLS, 서버/DB 허용 기준 동기화·회수, Secret key CRUD 제거, 테스트→운영 migration 검증 |
+| T41 | 운영 허용 관리자 지점·과목 JWT/RLS migration 및 배포 완료. 실제 콘텐츠 저장·수정 반영, 비관리자 운영 세션 거부와 허용 목록 회수 절차 검증은 남음 |
 | T42 | 운영 과정/신청 모델·migration, 실제 비회원 API, 동의·보유/삭제·처리 상태, 남용 방지·idempotency, 실제 접수 공개 조건 |
 | T12·T18·T20~T24 | 상세 자료·공식 이미지/로고/도메인, 전체 폭·키보드·확대·reduced-motion·Lighthouse, 실제 외부 CTA·배포·운영 인계 |
 
@@ -149,4 +149,10 @@ Supabase Dashboard에서 `dslee1311@naver.com` 초대는 200 응답과 발송 �
 
 새 migration은 허용 이메일 3개(`xodn1311@naver.com`, `dslee1311@naver.com`, `jjcoin2@gmail.com`)를 초기 목록에 넣고 branch/course 행의 관리자 SELECT·INSERT·UPDATE만 허용한다. `mayone_enrollments` 권한을 열지 않으며 branch/course 삭제 권한도 부여하지 않는다. 공개 페이지의 class JSON은 허용 필드만 projection한다.
 
-현재 작업 트리에서 Node.js 24로 Production build, `npm run typecheck`, `npm run lint`, `git diff --check`가 통과했다. Production Supabase migration과 Production 배포는 아직 적용하지 않았다. 운영 권한·DB 변경 및 배포는 적용 직전 확인을 기다리며, migration 적용 후 허용/비허용 계정과 지점·과정 추가/수정을 확인해야 FE-T41을 완료할 수 있다.
+당시 작업 트리에서 Node.js 24로 Production build, `npm run typecheck`, `npm run lint`, `git diff --check`가 통과했다. 이 기록 작성 시점에는 Production Supabase migration과 배포가 적용되지 않은 상태였다. 승인 후 실제 적용·검증 결과는 아래 추가 기록을 따른다.
+
+## Production migration 및 관리자 배포 완료 — 2026-10-04
+
+사용자가 운영 권한 변경을 승인한 뒤 `mayone-home-production`에 `20261004130000_enable_allowlisted_admin_content_writes.sql`을 적용했다. Supabase SQL Editor는 성공을 표시했다. 후속 읽기 전용 조회에서 허용 이메일 3개, `mayone_branches`·`mayone_class_offers` RLS 정책 6개, authenticated 콘텐츠 DELETE 권한 0개, `mayone_enrollments` authenticated 직접 권한 0개를 확인했다. 운영자는 지점·과목을 추가·수정할 수 있으며, 콘텐츠 삭제와 신청자 테이블 직접 접근은 열지 않았다.
+
+GitHub `main`에는 `f9a4d9f6b2d2ba95e9f55f8df2bd6fb538d5ea1d`를 push했고, Vercel Production deployment `dpl_59d9aFeVKeWkSAwAZXW75ZJTg4z6`가 `READY`로 운영 별칭 `https://mayone-home.vercel.app`에 연결됐다. 실제 브라우저에서 `xodn1311@naver.com` 세션으로 `/admin`, `/admin/branches`, `/admin/classes`가 열리고 지점 8곳 및 지점 추가·수정·과정 추가 UI를 확인했다. Production 콘텐츠를 임의 생성·수정하지 않아 저장 후 공개 반영과 비관리자 운영 세션의 거부는 별도 검증 조건으로 남긴다.

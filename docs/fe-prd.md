@@ -2,7 +2,7 @@
 
 - 작성일: 2026-09-27
 - 최근 갱신: 2026-10-04
-- 상태: 브랜드 홈페이지·공개 지점과 테스트/운영 Supabase 연결은 기존 배포 기록에서 확인했다. FE-T40 관리자 이메일·비밀번호 인증과 페이지/API 보호를 구현하고 2026-10-04 Vercel Production에 배포했다. 사용자 승인으로 `dslee1311@naver.com`, `jjcoin2@gmail.com`을 Production 허용 목록에 추가해 재배포했다. `dslee1311@naver.com` 초대 요청은 처리됐고 `jjcoin2@gmail.com`은 Supabase 이메일 발송 제한(429)으로 재시도가 필요하다. 실제 메일 수신·초기 비밀번호 설정·로그인·권한 회수 검증은 대기 중이다. FE-T41 관리자 JWT/RLS 전환과 FE-T42 실제 비회원 신청은 미구현이다. Production 관리자 변경 API와 mock 신청은 차단하며 공개 조회는 유지한다. 2026-10-04 코드·문서 정합성 점검 결과는 [project-audit.md](./project-audit.md)에 기록한다.
+- 상태: 홈페이지와 8개 공개 지점은 Production에서 제공한다. FE-T40 Auth 및 관리자 페이지/API 보호와 FE-T41 Production 허용 목록/JWT RLS를 구현했다. `xodn1311@naver.com`의 실제 Production 관리자 세션을 확인했고 운영 지점·과목 화면에서 추가/수정 UI를 확인했다. migration 검증에서 허용 이메일 3개와 관리자 정책 6개, 콘텐츠 삭제 권한 0개, 신청자 직접 권한 0개가 확인됐다. GitHub `main`의 `f9a4d9f`를 Vercel Production `dpl_59d9aFeVKeWkSAwAZXW75ZJTg4z6`로 배포했다. 실제 운영 콘텐츠 저장과 비관리자 로그인 거부는 아직 통합 검증하지 않았다. `jjcoin2@gmail.com` 초대 메일은 429 제한으로 재시도가 필요하고 실제 수신·초기 비밀번호 설정은 대기 중이다. FE-T42 실제 비회원 신청은 미구현·비활성이다. 공개 페이지는 서버에서 읽고 공개 필드만 반환한다.
 - 구현 작업: [fe-task.md](./fe-task.md)
 
 ## 1. 목적과 기준 문서
@@ -37,7 +37,7 @@ MAY.ONE의 살롱·교육·마켓과 미용인의 성장 구조를 소개하고,
 | 예약·신청·지원·문의 | 확정된 공식 외부 링크 또는 담당 채널로 연결 |
 | 마켓 | 외부 네이버 스마트스토어 이동; 자체 상품 판매·결제 없음 |
 | 사용자 인증 | 일반 방문자는 계정을 만들거나 로그인하지 않는다. 수강 신청은 공개 페이지에서 비회원으로 제출할 수 있다. |
-| 관리자 인증 | 관리자 2~3명만 Supabase Auth 이메일·비밀번호로 `/admin`에 로그인한다. 공개 회원가입을 끄고 서버 환경변수의 이메일 허용 목록에 등록된 개별 계정만 허용한다. 2단계 인증은 요구하지 않는다. |
+| 관리자 인증 | 승인된 개별 Supabase Auth 계정만 `/admin`에 이메일·비밀번호로 로그인한다. 공개 회원가입을 끄며 로컬·Preview는 서버 환경변수, Production은 DB 허용 목록으로 권한을 판정한다. 2단계 인증은 요구하지 않는다. |
 | Supabase | 테스트·운영 데이터 저장소로 사용한다. 공개 조회, 비회원 신청 제출, 관리자 CRUD를 서로 다른 grants/RLS/API 경로로 분리한다. Secret key는 서버에서 제한적으로만 사용한다. |
 
 ### 1.3 현재 구현과 목표 요구사항의 구분
@@ -47,13 +47,13 @@ FE-01~FE-09와 NFR-01~NFR-05는 최종 제품 요구사항이다. 아래 현황�
 | 영역 | 현재 구현 | 남은 작업 |
 | --- | --- | --- |
 | 브랜드·지점 | 원본 랜딩, 공개 지점 목록·검색·예약 링크. 지점 목록·채용 관계·사이트맵은 같은 공개 지점 조회를 사용 | 공식 에셋·도메인, 상세 지점 자료, 전체 시각 QA — T12·T18·T20~T24 |
-| 실제 교육 | 정적 `AcademyClass` 목록·상세·외부 신청 CTA. 승인된 실제 교육 데이터는 없음 | 운영 과정/회차 모델·공개 상태·내부 신청 기능 — T41~T42 |
+| 실제 교육 | `AcademyClass` 목록·상세·외부 신청 CTA와 Production 관리자 추가/수정 UI가 구현됐다. 현재 운영 카탈로그는 비어 있고 실제 교육 데이터는 승인 대기다. | 실제 과정·회차·가격·강사 자료 확정 및 실제 운영 저장 검증; 신청 API — T41~T42 |
 | 테스트 교육·신청 | 개발/Preview의 `MockClassOffer`와 테스트 확인 동의. `/api/mock-enrollments`는 테스트 제출 전용 | 실제 개인정보 동의·신청 처리로 전환 — T42 |
-| 관리자 인증 | Supabase Auth + 서버 `ADMIN_EMAIL_ALLOWLIST`, 서버 인증 API·HttpOnly cookie, 로그인 복귀·계정 메뉴, 초대/복구 callback, 페이지/API 검사 | 첫 관리자와 `dslee1311@naver.com` 초대 요청 완료, `jjcoin2@gmail.com`은 이메일 발송 제한 후 재시도 필요; 실제 수신·초기 비밀번호·세션·허용 해제 검증 — T40 |
-| 데이터 권한 | 서버 Secret key 어댑터. 브라우저 `anon`·`authenticated`의 직접 테이블 접근은 기존 migration에서 차단 | 공개 projection/SELECT 정책과 관리자 JWT/RLS — T41 |
-| 관리자 변경 | 인증된 테스트 환경에서 Supabase CRUD, Auth만 설정한 로컬 개발에서는 loopback 파일 fallback. 운영 지점은 관리자 조회 가능 | Production 변경은 T41 검증 전 `503`; 운영 과정·신청 관리는 T42까지 대기 |
+| 관리자 인증 | Supabase Auth + 서버 인증 API·HttpOnly cookie, 로그인 복귀·계정 메뉴, 초대/복구 callback, 페이지/API 검사. Production은 DB 허용 목록 사용 | `xodn1311@naver.com` Production 관리자 세션 확인. 초대 메일 제한으로 지연된 다른 계정의 실제 수신·초기 비밀번호와 허용 해제 검증은 T40 |
+| 데이터 권한 | Production migration이 allowlist helper/RLS를 적용했다. 허용된 Auth JWT는 지점·운영 과정의 SELECT/INSERT/UPDATE만 가능; 신청 테이블의 authenticated 직접 권한 없음 | 공개 조회는 서버 Secret key와 필드 projection 유지. 실제 콘텐츠 저장·수정 및 비관리자 runtime 검증은 T41 |
+| 관리자 변경 | Production에서 지점·과목 추가·수정 UI와 JWT 저장 경로를 제공하며 삭제는 비활성. 신청자 기능은 접수 준비 전 읽기 전용 | 허용 관리자 세션에서 화면 노출 및 DB 정책은 확인. 실제 운영 레코드 저장·수정 후 공개 반영은 검증 자료가 정해지면 확인 — T41~T42 |
 
-이전 DB 연결·migration 기록은 유지하며, 2026-10-04 추가 배포에서는 Vercel Production의 서버 관리자 이메일 허용 목록과 최신 앱 코드를 적용했다. DB migration과 Auth 계정의 비밀번호는 변경하지 않았다. 후속 배포에서는 홈페이지의 Dashboard 초대 fragment 처리를 추가하고, 사용자 승인 후 운영 첫 관리자 계정의 초대 요청과 생성 상태를 확인했다. 이후 승인된 두 이메일을 허용 목록에 추가해 재배포했다. 공개 페이지는 관리자 로그인 없이 유지한다. 테스트 CSV의 `isMock: true`와 `testDataAcknowledged`는 실제 교육 공개 상태나 개인정보 동의를 대체하지 않는다.
+이전 DB 연결·migration 기록은 유지한다. 2026-10-04 후속 작업에서 Production 관리자 권한을 DB 허용 목록과 JWT/RLS로 전환하고 새 앱을 배포했다. `xodn1311@naver.com`의 실제 관리자 세션과 지점·과목 관리 화면을 확인했으며 Auth 비밀번호나 운영 콘텐츠는 변경하지 않았다. 공개 페이지는 관리자 로그인 없이 유지한다. 테스트 CSV의 `isMock: true`와 `testDataAcknowledged`는 실제 교육 공개 상태나 개인정보 동의를 대체하지 않는다.
 
 ## 2. 목표, 이용자, 범위
 
@@ -141,9 +141,9 @@ Production에서 실제 접수를 켜기 전에는 공개할 과정, 개인정�
 | `/admin/auth-link` | 기존 implicit hash 초대/복구 링크 확인 | 토큰 fragment를 즉시 제거하고 서버 세션으로 교환; 기존 로그인 상태에서도 링크 처리 |
 | `/admin/complete-invite` | 초대·복구 및 기존 관리자 비밀번호 설정 | 서버에서 허용 계정 확인; 12~128자·확인 입력을 서버 재검증하고 저장 후 관리자 홈으로 이동 |
 | `/admin` | 관리자 메뉴와 신청자·과목·지점 관리 진입 화면 | 인증된 허용 목록 관리자만; 다른 사용자는 로그인으로 이동 또는 접근 거부 |
-| `/admin/enrollments` | 신청자 데이터 확인·수정·삭제 | 관리자 권한 필요; 신청자 개인정보는 일반 방문자에게 제공하지 않음 |
-| `/admin/classes` | 교육 과정 추가·수정·삭제 | 관리자 권한 필요; 공개 상태·모집 상태를 별도로 관리 |
-| `/admin/branches` | 지점 정보 확인·추가·수정·삭제, 공개 상태 관리 | 관리자 권한 필요 |
+| `/admin/enrollments` | 신청자 데이터 확인 | 관리자 권한 필요; Production 신청자 기능은 접수 전까지 읽기 전용이며 개인정보는 일반 방문자에게 제공하지 않음 |
+| `/admin/classes` | 교육 과정 추가·수정 | 관리자 권한 필요; 공개 상태·모집 상태를 별도로 관리하고 Production 삭제는 제공하지 않음 |
+| `/admin/branches` | 지점 정보 확인·추가·수정, 공개 상태 관리 | 관리자 권한 필요; Production 삭제는 제공하지 않음 |
 | `/haru/cooperation` | 공개 확인된 산학협력 프로그램·기관·문의 안내 | 실제 공개 자료가 있을 때만 표시하고 문의는 채널 확보 후 활성화 |
 | `/recruit` | 성장 경로와 채용 목록 | 공고 미확보 시 준비 상태도 제공 |
 | `/recruit/[jobId]` | 채용 조건·절차·지원 안내 | 공개 가능한 공고 데이터 존재 |
@@ -233,7 +233,7 @@ Production에서 실제 접수를 켜기 전에는 공개할 과정, 개인정�
 - `/admin/classes`와 `/admin/branches`는 관리자 Auth 세션과 보호된 서버 경로로 각각 `mayone_class_offers`, `mayone_branches`를 추가·수정한다. Production에서는 사용자 JWT와 DB RLS를 함께 적용하고, 삭제는 지원하지 않는다. 운영 과정은 테스트용 `MockClassOffer`와 분리된 `AcademyClass` 모델로 저장하며 공개·검토 완료된 과정만 `/haru/classes`에 노출한다. `/haru/apply`의 운영 접수와 신청자 데이터 변경은 별도 FE-T42 승인 전까지 비활성이다. 비회원 공개 페이지는 Draft나 비공개 신청 정보에 접근하지 않는다. Production 허용 이메일은 `mayone_admin_emails`에서 관리하고, 개발·Preview는 서버 `ADMIN_EMAIL_ALLOWLIST`를 사용한다.
 - Production 신청은 공식 과정 자료, 개인정보 수집·이용 안내와 동의, 보유·삭제 기간, 접수 담당 절차가 준비된 후 활성화한다. 그 전까지 mock 과정·신청은 개발/Preview에만 표시하고 Production에는 준비 상태를 제공한다.
 
-**완료 기준:** 비회원은 공개 과정만 조회하고 로그인 없이 승인된 과정을 신청할 수 있다. 서버 이메일 허용 목록에 등록된 Supabase Auth 계정은 이메일·비밀번호 로그인 후 신청자를 조회하고 지점·과정을 CRUD할 수 있다. 비관리자는 관리자 페이지/API와 신청자 데이터를 읽거나 변경할 수 없다. Production 실제 신청은 과정·개인정보 안내·보존 기간·담당 절차가 준비된 뒤에만 활성화한다. 강의 자료 미확보·신청 가능한 강의 없음·필터 결과 없음·마감·종료를 구분한다.
+**완료 기준:** 비회원은 공개 과정만 조회하고 로그인 없이 승인된 과정을 신청할 수 있다. 서버에서 검증된 Supabase Auth 허용 계정은 지점·운영 과정을 조회·추가·수정할 수 있다. Production 콘텐츠 삭제와 신청자 테이블 직접 접근은 제공하지 않는다. 실제 신청·신청자 관리는 과정·개인정보 안내·보존 기간·담당 절차가 준비된 뒤 별도 작업으로 활성화한다.
 
 ### FE-05. 산학협력
 
@@ -461,7 +461,7 @@ origin_source/
 ### NFR-05. 공개 신청과 관리자 접근 제어
 
 - 일반 방문자에게 계정·로그인을 요구하지 않는다. 공개 페이지는 기존 정보 조회 흐름을 유지하고, 로그인은 공개 내비게이션과 분리된 관리자 경로에서만 제공한다.
-- 일반 회원가입은 비활성화한다. 관리자는 2~3개의 개별 Supabase Auth 계정으로 관리하고, 서버 환경변수 `ADMIN_EMAIL_ALLOWLIST`에 이메일이 등록된 사용자만 관리자 권한을 가진다. 공유 계정은 쓰지 않으며 이메일·비밀번호 외 별도 2단계 인증은 요구하지 않는다.
+- 일반 회원가입은 비활성화한다. 관리자는 승인된 개별 Supabase Auth 계정으로 관리한다. 로컬·Preview는 서버 환경변수 `ADMIN_EMAIL_ALLOWLIST`, Production은 DB의 `mayone_admin_emails`에 등록된 사용자만 관리자 권한을 가진다. 공유 계정은 쓰지 않으며 이메일·비밀번호 외 별도 2단계 인증은 요구하지 않는다.
 - 관리자는 초대 메일에서 직접 초기 비밀번호를 설정한다. 로그인 화면에서 같은 이메일 주소로 비밀번호 재설정 메일을 요청할 수 있으며, 인증 링크와 비밀번호 입력은 각 관리자의 브라우저에서 처리한다. 비밀번호나 인증 코드를 운영자가 대신 만들거나 전달하지 않는다.
 - 로그인 후에는 처음 요청한 관리자 화면으로 돌아가고, 복귀 주소는 알려진 관리자 경로만 허용한다. 관리자 메뉴에는 현재 로그인 이메일·선택 메뉴·비밀번호 설정·로그아웃을 제공한다. 로그인·복구·비밀번호 저장·로그아웃은 같은 출처 서버 API와 HttpOnly cookie를 사용하며 세션 토큰을 JSON 응답·브라우저 저장소에 노출하지 않는다.
 - PKCE·invite/recovery token hash·기존 implicit fragment 링크를 지원한다. 기존 세션이 있어도 복구 링크를 먼저 확인하며 만료·잘못된 링크는 재요청 안내로 연결한다. 새 비밀번호는 서버에서 12~128자와 확인 입력을 검사한다. 복구 메일은 허용 이메일에만 요청하고 계정 등록 여부를 구분하지 않는 안내를 반환한다.
@@ -501,24 +501,24 @@ origin_source/
 | 영역 | 현재 상태와 목표 |
 | --- | --- |
 | 테스트·운영 Supabase | 테스트 프로젝트 `https://vmhydtjwvfyedxfloqhn.supabase.co`는 `.env.local`에서 사용하며 migration·RLS·가져오기·CRUD 검증을 완료했다. 운영 프로젝트 `https://nskeltlthbqlxxaubbom.supabase.co`에도 schema/RLS를 적용했고 Vercel Production에 운영 URL·Secret key·`SUPABASE_DATA_TARGET=production`을 설정했다. 공개·확인된 지점 8곳은 Production `/salon`에서 조회된다. |
-| 현재 DB 권한 | `20261002130000_create_mayone_managed_data.sql`은 RLS를 켜고 `anon`·`authenticated` 권한을 회수한다. 현재 서버 공개 조회와 테스트 관리자 CRUD는 Secret key를 사용하므로 관리자 JWT/RLS 검증 완료가 아니다. FE-T41에서 관리자 CRUD의 Secret key 사용을 제거한다. |
+| 현재 DB 권한 | `20261002130000_create_mayone_managed_data.sql`은 기본 RLS를 켜며, `20261004130000_enable_allowlisted_admin_content_writes.sql`은 Production DB 허용 목록과 JWT helper를 추가했다. 허용된 세 이메일은 지점·운영 과정 SELECT/INSERT/UPDATE만 할 수 있다. DELETE와 authenticated 신청자 테이블 접근은 없다. 공개 페이지 조회는 서버 Secret key를 쓰고 공개 필드만 응답한다. |
 | Preview | Vercel Preview 환경변수는 아직 없다. 인증·RLS 작업 검증 전에 Preview에 테스트 프로젝트 URL·Secret key·`SUPABASE_DATA_TARGET=test`를 분리 설정하고 Production과 데이터가 섞이지 않는지 확인한다. |
-| 공개 정보 조회 | 현재 `/salon`은 서버 Secret key 또는 체크인 fallback에서 조회한 뒤 공개·검토 완료된 행과 허용된 공개 필드만 반환한다. 정적 실제 교육과 mock 카탈로그는 별도 조회다. FE-T41의 목표는 `anon`·비관리자 `authenticated`에 동일한 공개 SELECT/projection을 제공하는 것이다. |
+| 공개 정보 조회 | `/salon`과 운영 과정 페이지는 서버 Secret key로 읽고 공개·검토 완료된 행과 명시적 공개 필드 projection만 반환한다. 브라우저 `anon`·`authenticated` 직접 조회는 차단해 JSONB 내부 데이터 접근을 막는다. |
 | 공개 신청 | 현재 `/haru/apply`와 `/api/mock-enrollments`는 개발/Preview 시연만 지원한다. 실제 비회원 신청 API·개인정보 동의·남용 방지·중복 저장 억제는 FE-T42 미구현이며 Production 신청은 비활성이다. |
-| 관리자 계정 | 일반 회원가입을 끄고, 운영자가 초대한 관리자 2~3명만 Supabase Auth에 둔다. 서버 전용 `ADMIN_EMAIL_ALLOWLIST`가 허용된 이메일을 결정하며 이메일·비밀번호로 로그인한다. 별도 2단계 인증, 카카오·네이버 소셜 로그인과 일반 사용자 계정은 이번 범위가 아니다. |
-| 관리자 권한 | 서버의 모든 `/admin` 요청과 관리자 API/Server Action이 Supabase Auth 세션과 서버 이메일 허용 목록을 확인한다. 현재 DB는 브라우저 역할을 전면 차단하며 서버 어댑터가 테스트 CRUD를 수행한다. 관리자 자격을 검사하는 JWT/RLS 정책은 FE-T41에서 구현한다. Production 변경 API는 이 전환의 검증 전까지 503으로 차단한다. 허용 목록 변경은 신뢰된 배포 환경 설정에서만 한다. |
+| 관리자 계정 | 일반 회원가입을 끄고, 승인된 Supabase Auth 계정만 이메일·비밀번호로 로그인한다. 로컬·Preview는 서버 전용 `ADMIN_EMAIL_ALLOWLIST`, Production은 `mayone_admin_emails`가 허용 기준이다. Vercel Production에 남은 과거 `ADMIN_EMAIL_ALLOWLIST` 값은 현재 권한 판정에 사용되지 않는다. 별도 2단계 인증, 카카오·네이버 소셜 로그인과 일반 사용자 계정은 이번 범위가 아니다. |
+| 관리자 권한 | 모든 `/admin` 요청과 관리자 API가 Supabase Auth 세션 및 이메일 허용 여부를 확인한다. Production RLS는 허용 관리자 JWT에 지점·운영 과정 조회·추가·수정을 허용하고 삭제는 차단한다. 신청자 데이터에는 authenticated 직접 권한을 주지 않는다. Production migration과 배포는 완료됐으며 실제 운영 레코드 저장·수정 검증은 자료를 정한 뒤 진행한다. |
 | Production 데이터 | `mayone_branches`에는 공개·확인된 지점 8곳이 있다. `mayone_class_offers`, `mayone_enrollments`는 비어 있고 실제 접수는 꺼져 있다. 승인된 과정과 개인정보·보존·접수 절차가 준비되면 실제 신청을 단계적으로 활성화한다. |
 
 다음 표는 FE-T41~FE-T42 완료 후의 목표 권한이다. 현재 정책의 완료 상태로 읽지 않는다.
 
 | 주체 | 공개 지점·과정 | 신청자 데이터 | 관리 데이터 변경 |
 | --- | --- | --- | --- |
-| 비회원 `anon` | 공개 행과 공개 컬럼만 읽기 | 직접 접근 불가; 신청 API 제출만 가능 | 불가 |
+| 비회원 `anon` | 공개 페이지에서 공개 행·허용 필드만 서버 projection을 통해 조회 | 직접 테이블 접근 불가; 실제 신청 API는 T42에서 구현 | 불가 |
 | 로그인된 비관리자 `authenticated` | 비회원과 같은 공개 조회 | 접근 불가 | 불가 |
-| 허용 목록 관리자 `authenticated` | 공개·관리 데이터 조회 | 조회·수정·삭제 | 지점·과정 CRUD |
+| 허용 목록 관리자 `authenticated` | 공개·관리 콘텐츠 조회 | 신청자 데이터는 T42의 보호된 서버 기능에서 관리 | 지점·과정 SELECT/INSERT/UPDATE; 삭제 불가 |
 | 신청 API 서버 | 해당 없음 | 검증된 새 신청만 기록 | 불가 |
 
-- `anon`과 `authenticated`에는 `mayone_branches`·`mayone_class_offers`의 동일한 공개 데이터 SELECT 정책을 제공해 관리자 로그인 상태가 공개 페이지에 영향을 주지 않게 한다. PostgreSQL RLS는 행을 제한하고 컬럼을 감추지 않으므로, 비공개 필드는 공개 컬럼별 SELECT grants 또는 안전한 public projection으로 제외한다. `mayone_enrollments`는 `anon`과 허용되지 않은 `authenticated`의 SELECT/UPDATE/DELETE/INSERT를 모두 차단한다. 허용된 관리자 세션의 조회·변경만 별도 RLS 정책으로 승인한다. 신청 API만 서버에서 정해진 삽입을 수행하며 신청자의 입력 데이터나 관리자 키를 응답에 넣지 않는다.
+- 공개 페이지는 `mayone_branches`·`mayone_class_offers`를 서버에서 읽고 공개 필드를 projection한다. `anon`·`authenticated`에 전체 JSONB를 직접 SELECT하게 하지 않는다. 공개용 direct API가 필요해지면 안전한 view/RPC와 원본 행 접근 차단을 별도 설계한다. `mayone_enrollments`는 `anon`과 `authenticated`의 SELECT/UPDATE/DELETE/INSERT를 모두 차단한다.
 - `ADMIN_EMAIL_ALLOWLIST`는 개발·Preview의 서버 전용 변수로 두고 클라이언트 번들에 포함하지 않는다. Production은 `mayone_admin_emails`를 서버 인증과 `private.is_mayone_admin()` RLS 함수의 단일 권한 기준으로 사용한다. `mayone_admin_users`는 기존 식별자 기반 설계 이력이며 현재 Production 권한 판정에는 사용하지 않는다.
 - 관리자 페이지와 각 Route Handler는 서버에서 Supabase Auth 세션과 이메일 허용 목록을 검사한다. 이메일을 허용 목록에서 제거하거나 Auth 계정을 비활성화하면 새 요청부터 관리 권한이 없어야 한다.
 - `npm run supabase:import-local`은 체크인 지점/과정 카탈로그와 존재하는 로컬 지점·과정·테스트 신청 데이터를 ID 기준으로 가져온다. 원본 파일은 백업용으로 남기고 운영 target import는 거부한다.

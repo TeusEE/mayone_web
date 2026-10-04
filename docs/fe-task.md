@@ -7,7 +7,7 @@
 - 구현 가이드: [frontend-style-guide.md](./frontend-style-guide.md) · 보관 참고: [visualsalon-reference.md](./visualsalon-reference.md)
 - 운영자료 후보: [webpage_contents.md](../origin_source/webpage_contents.md)
 
-현재 상태: A~C의 화면·목록 기능을 구현했고, 네이버 플레이스에서 확인한 8개 지점의 방문 정보와 예약 링크를 `/salon`에 공개했다. 지점 상세 화면은 정보 수집 전까지 임시 비활성화한다. D의 기본 검증과 핵심 앵커 QA, E의 GitHub push·Vercel Production 배포를 완료했다. FE-T25~FE-T38 CSV mock 신청, 로컬 개발용 관리자 홈, 신청자·수강 과목·지점 관리와 관련 검증을 완료했다. FE-T39 테스트·운영 Supabase 연결과 Production `/salon`의 운영 DB 조회도 완료했다. FE-T40에서는 초대형 Supabase Auth 이메일·비밀번호 로그인과 서버 전용 `ADMIN_EMAIL_ALLOWLIST` 검사, 관리자 페이지/API 보호를 구현했으며 2단계 인증은 제거했다. 공개 회원가입은 꺼져 있고 로컬 테스트 환경에는 현재 확인된 관리자 이메일을 설정한다. 현재 승인된 관리자 이메일을 Vercel Production 허용 목록에 등록하고 최신 Auth 코드를 배포했다. 운영 로그인 화면과 공개 페이지·미인증 접근 차단의 14개 HTTP 확인을 통과했으며 운영 첫 관리자 초대 요청과 계정 생성은 완료했으며 실제 메일 수신·비밀번호 설정·로그인·로그아웃 검증은 남아 있다. FE-T41의 DB RLS 전환과 FE-T42의 실제 비회원 신청 API는 미구현이다. 현재 코드도 Production 수강 신청과 원격 관리자 변경을 차단하며 운영 지점 조회만 허용한다. 운영 인증 코드는 2026-10-04 배포 `dpl_75nC8mVyjGSeUaXKRyHr13Q8c4eH`에서 기본 경로를 확인했으며, Vercel Preview DB 변수는 없다. 공식 도메인·Vercel 자동 Git 배포, 나머지 지점 자료·전체 반응형/접근성 QA도 남아 있다. 이번 코드·문서 점검과 리팩터링은 FE-T43 및 [project-audit.md](./project-audit.md)에 기록한다.
+현재 상태: A~C의 공개 화면·목록 기능과 8개 지점 공개를 완료했다. GitHub `main`에 `f9a4d9f`를 push했고 Vercel Production 배포 `dpl_59d9aFeVKeWkSAwAZXW75ZJTg4z6`가 READY다. FE-T40 관리자 인증 코드는 배포됐고 Production에서 `xodn1311@naver.com` 관리자 세션을 확인했다. 초대 메일 수신·직접 비밀번호 설정과 다른 계정 검증은 남아 있다. FE-T41 DB 허용 목록/RLS migration을 적용해 세 승인 이메일에 지점·과목 조회·추가·수정 권한을 주고 삭제와 신청자 테이블 직접 권한은 차단했다. 운영 관리자 화면과 버튼은 확인했으나 실제 콘텐츠 저장은 수행하지 않았다. FE-T42 실제 비회원 신청 API는 미구현이며 운영 신청은 비활성이다. Vercel Preview DB 변수, 공식 도메인, 자동 Git 배포와 전체 화면 QA도 남아 있다. 이번 점검 결과는 [project-audit.md](./project-audit.md)에 기록한다.
 
 ## 1. 작업 관리 원칙
 
@@ -25,8 +25,8 @@
 | --- | --- | --- |
 | FE-01 공통 레이아웃·이동 | T05~T06·T20·T43 | 구현 완료; 전체 키보드·확대·reduced-motion QA 대기 |
 | FE-02 브랜드 랜딩 | T07~T10·T20~T21 | 원본 랜딩 구현; 전체 폭 시각 QA 대기 |
-| FE-03 지점 | T02~T03·T08·T11~T12·T38~T41·T43 | 공개 지점 목록·검색·예약과 테스트 CRUD 구현; 상세 자료·관리자 JWT/RLS 대기 |
-| FE-04 교육·신청·관리 | T09·T13~T14·T25~T37·T39~T42·T43 | 정적 교육 화면과 mock 시연 구현; 실제 과정 모델·동의·비회원 신청·운영 공개 미완료 |
+| FE-03 지점 | T02~T03·T08·T11~T12·T38~T41·T43 | 공개 지점 목록·검색·예약과 테스트 CRUD 구현; Production 지점 JWT/RLS·추가/수정 UI 적용, 실제 저장 확인·상세 자료 대기 |
+| FE-04 교육·신청·관리 | T09·T13~T14·T25~T37·T39~T42·T43 | `AcademyClass` 운영 모델과 Production 추가/수정 UI 적용; 과정 자료·실제 저장 확인·개인정보 동의·비회원 신청·접수 공개 대기 |
 | FE-05 산학협력 | T02~T03·T09·T15·T23 | 화면 구현; 공개 프로그램·사례·담당 채널 대기 |
 | FE-06 마켓 | T02·T10·T23 | 스토어 주소 반영; 실제 접속·대표 상품 검증 대기 |
 | FE-07 채용 | T02~T03·T10·T16·T23·T43 | 목록·상세·CTA 규칙 구현; 실제 공고·지원 수단 대기 |
@@ -36,9 +36,9 @@
 | NFR-02 성능·이미지 | T18·T21·T27~T38 | 이미지 컴포넌트 구현; 실제 이미지·Lighthouse 대기 |
 | NFR-03 SEO·공유 | T18·T22~T24·T27·T30~T34·T38·T43 | 환경별 noindex·메타데이터 구현; 공식 도메인·공유 에셋 대기 |
 | NFR-04 유지보수·안정성 | T01·T03·T19·T21·T39·T43 | 로컬 정적 검사·중요 규칙·빌드 검증; 배포 후 전체 여정 대기 |
-| NFR-05 신청·관리자 권한 | T39~T43 | Auth 가드 구현; 실제 계정 검증·JWT/RLS·실제 비회원 신청·운영 공개 대기 |
+| NFR-05 신청·관리자 권한 | T39~T43 | Auth 가드와 지점·과목 Production JWT/RLS 적용; 실제 저장·수정 흐름, 비회원 신청 API·운영 접수 검증 대기 |
 
-체크 근거는 작업 내 검증 기록과 FE-T43의 최신 로컬 점검 결과를 사용한다. 현재 RLS는 서버 Secret key 전용 초기 정책이며 FE-T41의 역할별 정책 완료를 뜻하지 않는다.
+체크 근거는 작업 내 검증 기록과 FE-T43의 최신 로컬 점검 결과를 사용한다. FE-T41은 허용 관리자 지점·과목 쓰기 RLS와 Production 배포를 완료했지만 실제 콘텐츠 저장·수정 검증 및 공개 역할 분리의 후속 항목은 남아 있다.
 
 ## 2. 단계와 권장 순서
 
@@ -51,7 +51,7 @@
 | E. 배포·운영 | FE-T22~FE-T24 | Preview 검수, 콘텐츠 공개 점검, Production 배포·운영 인계 | GitHub push 및 Production 배포 완료; 공식 도메인·자동 배포·운영 인계 대기 |
 | F. 수강 신청·로컬 관리자 시연 | FE-T25~FE-T38 | CSV mock 과정, 단계형 신청, 개발 전용 저장, 관리자 홈·신청자/과목/지점 관리, 분야별 과정 그룹, 환경별 제한 | mock 시연 기능 검증 완료; 공개 실제 신청과 인증 관리자 기능은 H단계 |
 | G. Supabase 데이터 환경 분리 | FE-T39 | 테스트 DB·운영 DB 연결, RLS migration, 테스트 분리, 공개 지점 운영 데이터 반영 | 로컬 테스트 DB 및 Production 운영 DB 연결·RLS·8개 공개 지점 조회 완료; Vercel Preview 테스트 DB 연결은 대기 |
-| H. 관리자 권한·비회원 수강 신청 | FE-T40~FE-T42 | 관리자 이메일 허용 목록과 비밀번호 로그인, RLS, 비회원 신청 API, Production 공개 검증 | FE-T40 인증 구현·Production 배포와 기본 HTTP 검증 완료; 실제 계정 비밀번호·로그인 검증 대기. FE-T41~42 미구현 |
+| H. 관리자 권한·비회원 수강 신청 | FE-T40~FE-T42 | 관리자 이메일 허용 목록과 비밀번호 로그인, RLS, 비회원 신청 API, Production 공개 검증 | FE-T40 인증·Production 로그인 세션 확인, FE-T41 지점·과목 RLS 및 Production 배포 완료; 운영 콘텐츠 저장 검증과 FE-T42 비회원 신청은 대기 |
 | I. 정합성 점검·리팩터링 | FE-T43 | PRD 대응표, 구현/운영/후속 상태 정리, 공통 저장·API 처리, 환경 제한·공개 데이터 일관성 | 코드·문서·자동 검증·로컬 HTTP 점검 완료; 남은 운영 조건은 FE-T40~T42 및 점검 기록 참조 |
 
 FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립적으로 진행할 수 있다. 토큰·공통 컴포넌트를 완성한 뒤 메인을 먼저 만들고, 동일한 콘텐츠 조회 계층으로 목록·상세를 확장한다.
@@ -532,7 +532,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [x] 운영 프로젝트에 schema migration과 RLS 권한 제한을 적용했다. `mayone_branches`에 공개·확인된 기존 지점 8곳만 넣고 Production `/salon`에서 표시를 확인했다. 테스트 강의와 테스트 신청자는 가져오지 않았고 `mayone_class_offers`, `mayone_enrollments`는 비워 두었다.
 - [x] Vercel Production 재배포 `JCp31F1AyD48AafpxBZg8dEP3rSi`가 `Ready`이며, 운영 지점 페이지에서 Supabase 데이터 조회를 확인했다.
 - [ ] Vercel Preview에는 현재 Supabase 환경변수가 없다. Preview에서도 테스트 Supabase CRUD를 검증할 필요가 있으면 테스트 URL·Secret key·`SUPABASE_DATA_TARGET=test`를 Preview 범위로 등록하고 격리를 확인한다.
-- 완료 기준: 로컬 테스트 DB CRUD와 Production 운영 DB 조회가 각각 확인되고, Production에 테스트 신청 자료가 없으며, 비밀 key가 서버 밖으로 노출되지 않는다. 현재 모든 RLS-enabled 테이블을 서버 Secret key만 쓰는 초기 정책은 FE-T41에서 공개·관리자 접근 정책으로 교체한다. Vercel Preview 테스트 DB 사용은 별도 설정·검증 전까지 완료로 표시하지 않는다.
+- 완료 기준: 로컬 테스트 DB CRUD와 Production 운영 DB 조회를 확인한다. Production 관리 쓰기는 별도 FE-T41 JWT/RLS 범위이고, 신청자 데이터는 server role 경로에 둔다. 테스트 자료는 운영으로 가져오지 않고 비밀 key는 서버 밖으로 노출하지 않는다.
 
 ## 13. H단계 — 관리자 권한과 비회원 수강 신청
 
@@ -546,7 +546,7 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [ ] `jjcoin2@gmail.com` 초대 요청은 2026-10-04 20:05 KST `429 email rate limit exceeded`로 거부됐다. 제한 해제 후 초대 요청을 재시도하고 실제 수신·비밀번호 설정을 확인한다.
 - [ ] 운영 초대 메일의 실제 수신과 관리자의 직접 초기 비밀번호 설정을 확인한다. 발송 요청 처리와 수신 완료를 구분한다.
 - [x] 로컬 테스트와 Vercel Production의 브라우저/SSR Auth용 publishable key와 URL을 환경변수로 설정하고 Secret key와 분리한다. 값은 문서나 Git에 쓰지 않는다. Vercel Preview 변수는 아직 없으며 Preview 관리자 검증 전 설정한다.
-- [x] 로컬·Preview는 서버 전용 `ADMIN_EMAIL_ALLOWLIST`, Production은 `mayone_admin_emails` 서버 조회를 허용 기준으로 사용하도록 코드를 준비한다. Production의 같은 이메일 기준을 RLS helper도 확인하고, 관리 콘텐츠 변경은 사용자 JWT를 사용한다. migration 적용과 운영 배포·검증은 FE-T41의 미완료 항목으로 둔다. 이전 `mayone_admin_users` 테이블은 앱 권한 검사에서 사용하지 않는다.
+- [x] 로컬·Preview는 서버 전용 `ADMIN_EMAIL_ALLOWLIST`, Production은 `mayone_admin_emails` 서버 조회를 허용 기준으로 사용한다. Production RLS helper도 같은 이메일을 확인하고 지점·운영 과정 변경은 사용자 JWT를 사용한다. 이전 `mayone_admin_users` 테이블은 앱 권한 검사에서 사용하지 않는다.
 - [x] `/admin/login`과 `/api/admin/auth/[action]`에서 이메일·비밀번호 로그인, 복구 메일 요청, 비밀번호 저장, 로그아웃을 구현한다. 같은 출처 JSON·본문 제한을 검사하고 로그인/세션 교환·비밀번호 저장 전 서버 `getUser()`와 허용 목록을 확인한다. 세션은 HttpOnly cookie에 저장하고 JSON 응답·브라우저 저장소에는 토큰을 전달하지 않는다.
 - [x] PKCE code·invite/recovery token hash·기존 implicit fragment 초대/복구 콜백을 처리한다. `/admin/auth-link`에서 fragment를 지우고 서버 세션으로 교환하며 이미 로그인된 브라우저에서도 링크를 먼저 처리한다. 실패·만료 시 설정 메일 재요청 안내를 제공한다.
 - [x] Dashboard 초대가 기본 Site URL인 `/`로 돌아와도 인증 fragment를 처리한다. 일반 홈페이지 섹션 anchor는 유지하고 인증 fragment만 서버 세션으로 교환한다. 최초 진입과 같은 페이지의 hash 변경을 처리하며 운영 배포 `dpl_3V8qy1s6YbqdNYJMME6DUSM4VaTw`에서 일반 앵커 유지·만료 링크 안내 이동을 확인했다.
@@ -561,22 +561,25 @@ FE-T02의 자료 목록 정리와 FE-T01의 프로젝트 구성은 서로 독립
 - [ ] 관리자가 직접 비밀번호를 설정한 뒤 이메일·비밀번호 로그인·로그아웃·허용 해제·세션 만료를 브라우저에서 확인한다.
 - [x] 운영 관리자 이메일 `dslee1311@naver.com`, `jjcoin2@gmail.com`을 확정해 Vercel Production 허용 목록에 추가했다. 두 이메일은 Auth 초대 전 존재하지 않았음을 확인했다.
 - [x] 2026-10-04 현재 승인 이메일을 Vercel Production의 서버 전용 Secret `ADMIN_EMAIL_ALLOWLIST`에 등록하고 최신 Auth 코드를 배포했다. 배포 `dpl_75nC8mVyjGSeUaXKRyHr13Q8c4eH`가 Ready이며 `https://mayone-home.vercel.app`에 연결됐다. `/admin/login`과 공개 페이지, 미인증 관리자 이동·API 거절 등 14개 운영 HTTP 확인이 통과했다. 실제 계정 비밀번호·로그인 검증은 위 미완료 항목으로 유지한다.
+- [x] FE-T41에서 Production 권한 기준을 DB 허용 목록으로 전환했다. Vercel에 남은 `ADMIN_EMAIL_ALLOWLIST`는 과거 설정이며 현재 Production 관리자 권한 판정에는 사용하지 않는다.
 - 완료 기준: 허용된 이메일의 개별 Supabase Auth 계정만 이메일·비밀번호 로그인으로 관리자 화면과 쓰기 기능을 사용할 수 있고, 공개 페이지와 비회원 신청은 로그인 없이 유지된다.
 
 ### FE-T41. 방문자·관리자 DB 권한 및 RLS 분리
 
 - 우선순위: P0 / 요구사항: FE-03·FE-04·FE-09, NFR-05 / 의존성: FE-T40
-- [x] Production 허용 이메일 테이블 `mayone_admin_emails`와 고정 `search_path`의 `private.is_mayone_admin()` helper를 정의하는 신규 migration을 추가한다. 승인된 `xodn1311@naver.com`, `dslee1311@naver.com`, `jjcoin2@gmail.com`을 초기 허용 목록에 넣고 지점·운영 과정에 관리자 JWT의 SELECT/INSERT/UPDATE만 허용하도록 준비한다. `mayone_enrollments`에는 authenticated 권한과 정책을 주지 않는다.
+- [x] Production 허용 이메일 테이블 `mayone_admin_emails`와 고정 `search_path`의 `private.is_mayone_admin()` helper를 정의하고 migration으로 적용했다. 세 승인 이메일을 초기 목록에 넣고 지점·운영 과정에는 관리자 JWT의 SELECT/INSERT/UPDATE만 허용한다. `mayone_enrollments`에는 authenticated 권한과 정책을 주지 않는다.
 - [x] Production 이메일 권한 검사를 DB 허용 목록으로 전환하고, 지점·운영 과정 추가/수정은 Auth 사용자 JWT를 전달해 RLS를 통과하도록 연결한다. 운영 과정은 `AcademyClass` 모델로 저장·조회하며 공개·검토 완료 항목만 사이트에 전달한다. 관리자 지점·과정 화면은 삭제를 제공하지 않고 신청자/mock 변경 API는 계속 차단한다.
-- [ ] Migration을 운영 Supabase에 적용한 뒤 허용 관리자 로그인, 비관리자 거부, 지점·과정 추가/수정, 삭제·신청 테이블 거부를 확인한다. 이후 Production 배포와 관리자 UI 실사용을 검증한다. 운영 DB migration은 아직 적용하지 않았다.
-- [ ] 비회원 `anon`은 공개 상태 데이터를 읽게 하고, 관리자 세션이 있는 `authenticated` 요청에도 같은 공개 조회 정책을 적용한다. 공개되지 않은 행과 내부 관리 필드는 응답에 포함하지 않는다.
-- [ ] 공개 필드는 RLS만으로 제한할 수 없으므로 공개용 안전 projection을 추가하고 내부 필드가 PostgREST 응답에 나타나지 않는지 확인한다. 현재 `data`는 JSONB 한 컬럼이므로 컬럼 SELECT grants만으로 내부 키를 숨길 수 없다. 공개 view/RPC 등의 명시적인 필드 선택과 원본 테이블 접근 제한을 함께 검증한다.
-- [ ] `mayone_enrollments`의 직접 anon 조회·입력·수정·삭제를 차단한다. 허용되지 않은 authenticated 사용자도 신청자 개인정보나 관리 데이터에 접근하지 못하게 한다.
+- [x] 2026-10-04 승인 후 운영 Supabase migration을 적용했다. 읽기 전용 확인에서 허용 이메일 3개, 지점·과목 RLS 정책 6개, authenticated의 지점·과목 DELETE 권한 0개, `mayone_enrollments` 직접 권한 0개를 확인했다.
+- [x] Vercel Production 배포 `dpl_59d9aFeVKeWkSAwAZXW75ZJTg4z6`가 `READY`로 완료됐다. `xodn1311@naver.com` 세션으로 `/admin`, `/admin/branches`, `/admin/classes`에 접근해 지점 8곳과 지점 추가·수정 버튼, 과정 추가 버튼을 확인했다. Production 콘텐츠는 검증 중 생성·수정하지 않았다.
+- [ ] 실제 운영 비관리자 세션의 거부와 승인된 실제 지점·과정을 저장·수정한 뒤 공개 페이지에 반영되는 흐름은 운영 자료를 정한 뒤 확인한다. 테스트용 운영 콘텐츠는 만들지 않았다.
+- [x] 공개 페이지는 서버 Secret key 경로로 공개 상태 데이터를 읽고 명시적으로 허용 필드만 projection한다. 브라우저 `anon`과 `authenticated`의 직접 테이블 읽기는 계속 차단해 JSONB 내부 필드가 노출되지 않도록 한다.
+- [x] JSONB 전체 행을 브라우저에 공개하지 않도록 지점 응답은 `getSalonDirectoryData`, 과정 응답은 `projectAcademyClass`의 allowlist projection을 사용한다. 직접 public SELECT가 필요해지면 안전한 view/RPC와 원본 권한 차단을 먼저 설계한다.
+- [x] Production migration에서 `mayone_enrollments`의 `anon`·`authenticated` 권한을 회수했다. 읽기 전용 권한 조회에서 authenticated grants 0개를 확인했으며 신청 저장은 별도 server API 범위로 둔다.
 - [ ] Supabase Auth 계정의 허용 이메일을 DB 목록에서 회수하고 다음 요청부터 로그인·RLS 쓰기를 거부하는 운영 회수 절차를 확인한다. `mayone_admin_emails`가 앱과 RLS의 공통 권한 기준이며 사용자 콘텐츠 변경 경로에서 `SUPABASE_SECRET_KEY`를 사용하지 않는지 Production에서 검증한다.
-- [ ] 허용 목록 자체는 Data API에서 공개하지 않는다. RLS helper를 쓰면 고정된 `search_path`, 최소 실행 권한 등 안전 설정을 검증한다.
-- [ ] SQL/통합 검증에서 공개 데이터 보호, Draft 비공개, 신청자 테이블 직접 접근 거부, 비관리자 CRUD 거부, 허용 관리자 추가/수정 허용, 허용 목록 회수 후 거부를 각각 확인한다.
-- [ ] 로컬 test DB와 Preview용 테스트 DB에서 migration을 검증한다. Production에는 사전 백업/복구 절차와 롤아웃 확인 후 적용한다.
-- 완료 기준: 공개 사용자는 공개 정보만 보고 관리자는 허용된 CRUD를 수행한다. 브라우저나 REST API에서 RLS를 우회해 개인정보·관리 데이터를 얻거나 변경할 수 없다.
+- [x] 허용 목록 자체는 RLS를 켜고 public·anon·authenticated 권한을 회수했다. `private.is_mayone_admin()`은 고정 `search_path`와 최소 authenticated 실행 권한을 사용한다.
+- [ ] Production의 비관리자 JWT 거부와 실제 허용 관리자 지점·과정 저장/수정 후 공개 반영을 통합 확인한다. 읽기 전용 메타데이터 확인에서는 허용 이메일 3개, 관리자 정책 6개, 콘텐츠 DELETE 권한 0개, 신청자 직접 권한 0개를 확인했다. 허용 목록 회수 뒤 다음 요청에서 차단되는지도 별도 확인한다.
+- [ ] 테스트 DB/Preview에서 migration을 별도로 검증하고 Production 복구 절차를 문서화한다. Production 적용은 완료됐으며, 추가 적용 전 원격 schema 상태를 확인한다.
+- 완료 기준: 공개 페이지에는 공개·검토 완료 필드만 표시하고 Production 허용 관리자는 지점·과정을 조회·추가·수정한다. 콘텐츠 삭제와 신청자 테이블 직접 접근은 제공하지 않으며, 브라우저 역할은 RLS를 우회해 비공개 데이터에 접근할 수 없다.
 
 ### FE-T42. 비회원 수강 신청 API와 운영 공개 조건
 
