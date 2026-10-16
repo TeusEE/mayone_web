@@ -62,6 +62,7 @@ npm run admin-auth:test  # 관리자 이메일 허용 목록 접근 상태
 npm run http:test        # Origin·JSON·스트림 크기·로컬 쓰기 제한
 npm run enrollment-csv:test # 신청 파일·그룹·수식 방어·동시 저장
 npm run supabase-storage:test # 가짜 REST를 이용한 저장소 회귀 검증
+npm run supabase:seed-dev-classes # 테스트 DB에 운영 공개 교육 샘플 10개 추가 (기존 값 보존)
 npm run build            # Production 빌드
 npm start                # 빌드 결과 실행
 ```

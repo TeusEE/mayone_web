@@ -3,6 +3,7 @@ import { branches } from "../src/content/branches";
 import type { AcademyClass, Branch, ContentCollection, JobPosting } from "../src/types/content";
 import { getBranchBookingAvailability, getClassApplicationAvailability, getJobApplicationAvailability, isValidExternalUrl } from "../src/lib/actions";
 import { filterBranches, filterClasses, getBranchRegions } from "../src/lib/filters";
+import { getFirstClassSession, groupAcademyClassesByCategoryAndStartDate } from "../src/lib/class-directory";
 import { isValidImageSource } from "../src/lib/image";
 import { getCollectionState, getPublicRecords } from "../src/lib/content-visibility";
 import { createPageMetadata, getCanonicalSiteUrl, getRobotsMetadata, isIndexableDeployment } from "../src/lib/seo";
@@ -91,6 +92,28 @@ const classFixtures = [
 assert.deepEqual(filterClasses(classFixtures, "CUT", "open").map((item) => item.id), ["cut-open"]);
 assert.deepEqual(filterClasses(classFixtures, "COLOR", "closed"), []);
 assert.deepEqual(filterClasses(classFixtures).map((item) => item.id), classFixtures.map((item) => item.id), "reset returns the unfiltered class list");
+
+const laterSession = { ...session, startsAt: "2026-11-03T19:00:00+09:00", endsAt: "2026-11-03T21:00:00+09:00" };
+const directoryFixtures = [
+  academyClass({ id: "salon", category: "SALON_WORK" }),
+  academyClass({ id: "cut-later", sessions: [laterSession] }),
+  academyClass({ id: "color", category: "COLOR" }),
+  academyClass({ id: "cut-b", sessions: [laterSession, session], recruitmentStatus: "closed" }),
+  academyClass({ id: "cut-a" }),
+  academyClass({ id: "perm", category: "PERM" }),
+  academyClass({ id: "consulting", category: "CONSULTING" }),
+  academyClass({ id: "cut-without-date", sessions: [] }),
+];
+const originalDirectoryOrder = directoryFixtures.map((item) => item.id);
+const directoryGroups = groupAcademyClassesByCategoryAndStartDate(directoryFixtures);
+assert.deepEqual(directoryGroups.map((group) => group.category), ["CUT", "PERM", "COLOR", "CONSULTING", "SALON_WORK"]);
+assert.deepEqual(directoryGroups[0].classes.map((item) => item.id), ["cut-a", "cut-b", "cut-later", "cut-without-date"], "sort by the earliest session, use IDs for ties, and put undated courses last");
+assert.equal(getFirstClassSession(directoryFixtures[3]), session, "session input order does not affect the first education date");
+assert.equal(getFirstClassSession(directoryFixtures[7]), undefined);
+assert.deepEqual(directoryFixtures.map((item) => item.id), originalDirectoryOrder, "grouping does not mutate the source catalog");
+assert.deepEqual(groupAcademyClassesByCategoryAndStartDate(filterClasses(directoryFixtures, "CUT", "closed")).map((group) => group.classes.map((item) => item.id)), [["cut-b"]], "combined filters retain grouping and omit empty categories");
+assert.deepEqual(groupAcademyClassesByCategoryAndStartDate([]), []);
+assert.deepEqual(groupAcademyClassesByCategoryAndStartDate(filterClasses(directoryFixtures, "COLOR", "closed")), []);
 
 const draftCollection: ContentCollection<Branch> = {
   sourceState: "pending",

@@ -27,9 +27,8 @@ export function getBrandCopyForDevelopmentReview(): BrandContent | undefined {
 export const getPublicInstructors = () => getPublicRecords(instructors);
 export const getPublicClasses = () => getPublicRecords(classes);
 export async function getPublicAcademyClassesForPage(): Promise<AcademyClass[]> {
-  if (process.env.VERCEL_ENV === "production") {
-    return isSupabaseStorageConfigured() ? getSupabasePublicAcademyClasses() : [];
-  }
+  if (isSupabaseStorageConfigured()) return getSupabasePublicAcademyClasses();
+  if (process.env.VERCEL_ENV === "production") return [];
   return getPublicClasses();
 }
 export async function getPublicAcademyClassByIdForPage(id: string): Promise<AcademyClass | undefined> {

@@ -21,6 +21,7 @@
     "http:test": "tsx scripts/test-http.ts",
     "enrollment-csv:test": "tsx scripts/test-enrollment-csv.ts",
     "supabase:import-local": "node --conditions=react-server --import tsx scripts/import-local-data-to-supabase.ts",
+    "supabase:seed-dev-classes": "node --conditions=react-server --import tsx scripts/seed-development-classes.ts",
     "supabase-storage:test": "node --conditions=react-server --import tsx scripts/test-supabase-storage.ts"
   },
   "dependencies": {

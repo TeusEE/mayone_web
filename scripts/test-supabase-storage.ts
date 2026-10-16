@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   createSupabaseBranch,
   createSupabaseClassOffer,
+  createSupabaseAcademyClass,
   createSupabaseEnrollment,
   deleteSupabaseBranch,
   deleteSupabaseClassOffer,
@@ -19,8 +20,9 @@ import {
 } from "../src/lib/supabase-storage";
 import { getAdminBranchCatalog, getSalonDirectoryData } from "../src/content/local-branches";
 import { getMockClassOffers } from "../src/content/mock-class-offers";
+import { getPublicAcademyClassesForPage } from "../src/content/queries";
 import { getMockEnrollmentStorageTarget } from "../src/content/mock-enrollments";
-import type { Branch } from "../src/types/content";
+import type { AcademyClass, Branch } from "../src/types/content";
 import type { MockClassOffer } from "../src/lib/mock-class-offers";
 import type { MockEnrollmentCsvRecord } from "../src/lib/mock-enrollment-csv";
 
@@ -167,6 +169,25 @@ async function main(): Promise<void> {
   const updatedOffer = { ...offer, title: "=수정 테스트 과정" };
   assert.equal(await updateSupabaseClassOffer(offer.id, updatedOffer), true);
   assert.equal((await getSupabaseClassOffers())[0].title, updatedOffer.title);
+  const academySample: AcademyClass = {
+    id: "dev-sample-academy", title: "공개 교육 샘플", category: "CUT",
+    publicationState: "published", reviewState: "confirmed", confirmedAt: "2026-10-16T00:00:00Z",
+    instructorIds: [], instructorNames: ["샘플 강사"], introduction: "개발 화면 검수용 교육",
+    audience: ["미용인"], curriculum: ["이론", "실습"],
+    sessions: [{ startsAt: "2026-11-01T19:00:00+09:00", endsAt: "2026-11-01T21:00:00+09:00", timeZone: "Asia/Seoul", location: "샘플 교육장" }],
+    tuition: { amount: 50000, currency: "KRW", includes: [] }, cancellationPolicy: "샘플 안내", recruitmentStatus: "open",
+  };
+  assert.equal(await createSupabaseAcademyClass(academySample), true);
+  assert.deepEqual(await getSupabaseClassOffers(), [updatedOffer], "academy samples do not break the mock catalog in a shared development table");
+  delete process.env.VERCEL_ENV;
+  process.env.SUPABASE_DATA_TARGET = "test";
+  assert.deepEqual(await getPublicAcademyClassesForPage(), [academySample], "development pages read published academy samples from the test database");
+  database.mayone_class_offers.push({ id: "invalid-mock", data: { ...offer, id: "invalid-mock", isMock: false } });
+  await assert.rejects(getSupabaseClassOffers, /mock/, "malformed mock records still fail validation");
+  database.mayone_class_offers = database.mayone_class_offers.filter((row) => row.id !== "invalid-mock");
+  assert.equal(await deleteSupabaseClassOffer(academySample.id), true);
+  process.env.VERCEL_ENV = "production";
+  process.env.SUPABASE_DATA_TARGET = "production";
   assert.equal(await deleteSupabaseClassOffer(offer.id), true);
 
   assert.equal(await createSupabaseEnrollment(enrollment), true);

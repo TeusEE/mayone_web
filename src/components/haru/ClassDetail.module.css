@@ -1,0 +1,644 @@
+.page {
+  width: min(calc(100% - 2 * var(--page-gutter)), var(--content-wide));
+  margin-inline: auto;
+  padding-block: clamp(2.5rem, 6vw, 5rem) clamp(4rem, 8vw, 7rem);
+}
+
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.875rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.breadcrumb a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.previewNotice {
+  margin-bottom: 2rem;
+  padding: 0.875rem 1rem;
+  border-inline-start: 2px solid var(--color-accent);
+  background: var(--color-surface-soft);
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 21rem;
+  align-items: start;
+  gap: 0 clamp(2rem, 5vw, 4rem);
+}
+
+.hero {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 1.25rem;
+  color: var(--color-accent-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.category {
+  color: var(--color-accent-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text);
+  font-size: clamp(2rem, 3.6vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.3;
+  text-wrap: pretty;
+}
+
+.teacherLine {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.75rem;
+  margin: 1.25rem 0 1.75rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.teacherLine > span {
+  color: var(--color-text-secondary);
+}
+
+.sectionNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  padding-block: 0.5rem;
+  border-block: 1px solid var(--color-border);
+}
+
+.sectionNav a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  text-decoration: none;
+}
+
+.sectionNav a:hover {
+  color: var(--color-accent-text);
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.content {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+}
+
+.content > div:has(img) {
+  margin-top: 2rem;
+}
+
+.summaryRail {
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 0;
+}
+
+.summaryCard {
+  padding: 1.75rem;
+  border: 1px solid var(--color-border);
+  border-top: 2px solid var(--color-accent);
+  background: var(--color-surface-soft);
+}
+
+.summaryTitle {
+  margin: 0 0 1.5rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.priceBlock {
+  margin-bottom: 1.5rem;
+}
+
+.priceBlock > span {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.price {
+  margin: 0.25rem 0 0;
+  color: var(--color-text);
+  font-size: 2.125rem;
+  font-weight: 650;
+  letter-spacing: -0.045em;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+
+.priceNote {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.summaryInfo {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding-block: 1.25rem;
+  border-block: 1px solid var(--color-border);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.summaryInfo > div {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.summaryInfo dt {
+  color: var(--color-text-secondary);
+}
+
+.summaryInfo dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--color-text);
+}
+
+.summarySubline {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.applicationAction {
+  margin-top: 1.5rem;
+}
+
+.applicationAction > * {
+  width: 100%;
+  min-height: 3.25rem;
+  padding-inline: 0.875rem;
+  line-height: 1.5;
+}
+
+.applicationNote {
+  margin: 0.875rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.policyLink {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: var(--color-accent-text);
+  font-size: 0.75rem;
+  text-decoration: none;
+}
+
+.policyLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.section {
+  min-width: 0;
+  padding-block: 2.5rem;
+  border-bottom: 1px solid var(--color-border);
+  scroll-margin-top: 1rem;
+}
+
+.sectionTitle {
+  margin: 0 0 1.5rem;
+  color: var(--color-text);
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  line-height: 1.4;
+}
+
+.prose {
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.95;
+}
+
+.prose p {
+  margin: 0 0 1rem;
+  white-space: pre-line;
+}
+
+.prose p:last-child {
+  margin-bottom: 0;
+}
+
+.bulletList {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.bulletList li {
+  position: relative;
+  padding-left: 1rem;
+  white-space: pre-line;
+}
+
+.bulletList li::before {
+  position: absolute;
+  top: 0.75em;
+  left: 0;
+  width: 0.25rem;
+  height: 0.25rem;
+  background: var(--color-accent);
+  content: "";
+}
+
+.curriculumList {
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+  list-style: none;
+  color: var(--color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: 1.8;
+}
+
+.curriculumList li {
+  padding: 0.875rem 1.125rem;
+  border-bottom: 1px solid var(--color-border);
+  white-space: pre-line;
+}
+
+.curriculumList .curriculumHeading {
+  margin-top: 1.25rem;
+  background: var(--color-surface-soft);
+}
+
+.curriculumList .curriculumHeading:first-child {
+  margin-top: 0;
+}
+
+.curriculumHeading h3 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.instructors {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.instructor {
+  min-width: 0;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+}
+
+.instructor > div:has(img) {
+  max-width: 18rem;
+  margin-bottom: 1.25rem;
+}
+
+.instructor h3 {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.875rem;
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+}
+
+.instructor h3 span {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.instructor .bulletList {
+  margin-top: 1rem;
+}
+
+.specialties {
+  margin: 1rem 0 0;
+  color: var(--color-accent-text);
+  font-size: 0.8125rem;
+}
+
+.sectionNote {
+  margin: -0.75rem 0 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.sessions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.session {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr);
+  gap: 1.25rem;
+  padding-block: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.sessionIndex {
+  color: var(--color-accent-text);
+  font-family: Georgia, serif;
+  font-size: 1.75rem;
+  line-height: 1.3;
+}
+
+.session h3 {
+  margin: 0 0 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.sessionDate {
+  margin: 0;
+  color: var(--color-text);
+  font-size: 1.125rem;
+  font-weight: 650;
+}
+
+.sessionTime {
+  margin: 0.375rem 0 0;
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.sessionLocation {
+  margin: 0.5rem 0 0;
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.tuitionTotal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-surface-soft);
+}
+
+.tuitionTotal > span {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+
+.tuitionTotal strong {
+  color: var(--color-text);
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.035em;
+}
+
+.costColumns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+}
+
+.costColumns > div {
+  min-width: 0;
+}
+
+.costColumns h3 {
+  margin: 0 0 1rem;
+  color: var(--color-text);
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.costColumns .bulletList {
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.deadline {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+  border-inline-start: 2px solid var(--color-accent);
+  background: var(--color-surface-soft);
+  color: var(--color-text);
+  font-size: 0.875rem;
+}
+
+.deadline > span {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+
+.policyCopy {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  line-height: 1.85;
+}
+
+.policyCopy p {
+  margin: 0 0 0.875rem;
+  white-space: pre-line;
+}
+
+.policyCopy p:last-child {
+  margin-bottom: 0;
+}
+
+.policyCopy .policyHeading {
+  margin-top: 1.5rem;
+  color: var(--color-text);
+  font-weight: 650;
+}
+
+.policyCopy .policyHeading:first-child {
+  margin-top: 0;
+}
+
+.backToList {
+  padding-top: 2rem;
+}
+
+.mobileApplication {
+  display: none;
+}
+
+.backToList a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.backToList a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+@media (max-width: 58rem) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+  }
+  .hero, .content, .summaryRail {
+    width: 100%;
+  }
+  .summaryRail {
+    position: static;
+    margin-top: 1.5rem;
+  }
+  .teacherLine {
+    margin-bottom: 0;
+  }
+  .summaryCard {
+    padding: 1.5rem;
+  }
+  .summaryTitle {
+    margin-bottom: 1rem;
+  }
+  .summaryInfo {
+    gap: 0.75rem;
+  }
+  .priceBlock {
+    margin-bottom: 1rem;
+  }
+  .sectionNav {
+    gap: 0.25rem 1rem;
+    margin-top: 1.5rem;
+  }
+  .section {
+    padding-block: 2rem;
+  }
+  .sectionTitle {
+    font-size: 1.375rem;
+  }
+  .mobileApplication {
+    display: block;
+    margin-bottom: 1rem;
+  }
+  .mobileApplication > * {
+    width: 100%;
+    min-height: 3.25rem;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 35rem) {
+  .page {
+    padding-top: 1.5rem;
+  }
+  .breadcrumb {
+    margin-bottom: 1rem;
+  }
+  .previewNotice {
+    margin-bottom: 1.5rem;
+  }
+  .title {
+    font-size: 1.875rem;
+  }
+  .eyebrow {
+    margin-bottom: 1rem;
+  }
+  .summaryCard {
+    padding: 1.25rem;
+  }
+  .price {
+    font-size: 1.875rem;
+  }
+  .priceBlock {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+  }
+  .priceBlock > span {
+    flex-basis: 100%;
+  }
+  .priceNote {
+    margin: 0;
+  }
+  .costColumns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tuitionTotal {
+    padding: 1rem;
+  }
+  .session {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    gap: 0.875rem;
+  }
+  .sessionDate {
+    font-size: 1rem;
+  }
+  .curriculumList li {
+    padding-inline: 0.875rem;
+  }
+}
+
+@media (min-width: 58.01rem) and (max-height: 42rem) {
+  .summaryRail {
+    position: static;
+  }
+}

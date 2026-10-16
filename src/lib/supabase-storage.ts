@@ -207,7 +207,9 @@ export async function deleteSupabaseBranch(branchId: string): Promise<boolean> {
 }
 
 export async function getSupabaseClassOffers(): Promise<MockClassOffer[]> {
-  const offers = decodeRecords<MockClassOffer>(await selectRecords(TABLES.classOffers), "id");
+  // Development catalogs can contain both academy samples and mock application offers.
+  const rows = (await selectRecords(TABLES.classOffers)).filter((row) => !isAcademyClassRecord(row.data, row.id));
+  const offers = decodeRecords<MockClassOffer>(rows, "id");
   if (offers.some((offer) => typeof offer.tuitionKrw !== "number" || offer.isMock !== true)) {
     throw new Error("Supabase 테스트 과목의 금액 또는 mock 표시를 확인해 주세요.");
   }

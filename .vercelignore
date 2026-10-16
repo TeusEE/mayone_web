@@ -4,6 +4,7 @@
 /origin_source/
 /docs/
 /scripts/
+/src/content/fixtures/development-academy-classes.json
 /supabase/
 /.playwright-mcp/
 /.next/

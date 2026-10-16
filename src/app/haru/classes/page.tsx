@@ -32,6 +32,9 @@ export default async function ClassDirectoryPage() {
   return (
     <div className={styles.page}>
       <SectionHeading eyebrow="HARU · CLASS" title="HARU 교육 일정" description="공개가 확인된 교육의 분야와 모집 상태, 일정과 비용을 안내합니다." />
+      {process.env.NODE_ENV === "development" && classes.some((item) => item.id.startsWith("dev-sample-")) ? (
+        <aside className={styles.previewNotice} role="note">개발 검수용 샘플이 포함되어 있습니다. 운영에서 공개된 교육 일부를 복사했으며, 샘플의 실제 수강 신청은 비활성화되어 있습니다.</aside>
+      ) : null}
       {classes.length > 0 ? (
         <ClassDirectory classes={classes} instructors={instructors} />
       ) : !demoEnabled ? (
