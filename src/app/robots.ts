@@ -8,7 +8,11 @@ export default function robots(): MetadataRoute.Robots {
   }
 
   return {
-    rules: { userAgent: "*", allow: "/" },
+    rules: {
+      userAgent: "*",
+      allow: "/",
+      disallow: ["/admin", "/api/", "/auth/", "/haru/apply", "/haru/classes/preview"],
+    },
     sitemap: new URL("/sitemap.xml", siteUrl).toString(),
     host: siteUrl.host,
   };

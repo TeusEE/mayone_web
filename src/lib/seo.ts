@@ -33,6 +33,13 @@ export function isIndexableDeployment(): boolean {
   return process.env.VERCEL_ENV === "production" && Boolean(getCanonicalSiteUrl());
 }
 
+export function getSiteVerificationMetadata(): Metadata["verification"] {
+  const naver = process.env.NAVER_SITE_VERIFICATION?.trim();
+  return isIndexableDeployment() && naver
+    ? { other: { "naver-site-verification": naver } }
+    : undefined;
+}
+
 export function getRobotsMetadata(contentAvailable: boolean): NonNullable<Metadata["robots"]> {
   const production = isIndexableDeployment();
   return {

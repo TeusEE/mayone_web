@@ -6,7 +6,8 @@ import { filterBranches, filterClasses, getBranchRegions } from "../src/lib/filt
 import { getFirstClassSession, groupAcademyClassesByCategoryAndStartDate } from "../src/lib/class-directory";
 import { isValidImageSource } from "../src/lib/image";
 import { getCollectionState, getPublicRecords } from "../src/lib/content-visibility";
-import { createPageMetadata, getCanonicalSiteUrl, getRobotsMetadata, isIndexableDeployment } from "../src/lib/seo";
+import { createPageMetadata, getCanonicalSiteUrl, getRobotsMetadata, getSiteVerificationMetadata, isIndexableDeployment } from "../src/lib/seo";
+import robots from "../src/app/robots";
 
 function branch(id: string, officialName: string, region: string, overrides: Partial<Branch> = {}): Branch {
   return {
@@ -136,12 +137,22 @@ assert.equal(isValidImageSource("http://example.com/image.jpg"), false);
 
 const originalSiteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 const originalVercelEnv = process.env.VERCEL_ENV;
+const originalNaverVerification = process.env.NAVER_SITE_VERIFICATION;
 process.env.NEXT_PUBLIC_SITE_URL = "https://www.example.com";
 process.env.VERCEL_ENV = "production";
+delete process.env.NAVER_SITE_VERIFICATION;
 assert.equal(getCanonicalSiteUrl()?.origin, "https://www.example.com");
 assert.equal(isIndexableDeployment(), true);
 assert.deepEqual(getRobotsMetadata(true), { index: true, follow: true });
 assert.deepEqual(getRobotsMetadata(false), { index: false, follow: true });
+assert.equal(getSiteVerificationMetadata(), undefined);
+process.env.NAVER_SITE_VERIFICATION = "  naver-test-verification  ";
+assert.deepEqual(getSiteVerificationMetadata(), { other: { "naver-site-verification": "naver-test-verification" } });
+assert.deepEqual(robots(), {
+  rules: { userAgent: "*", allow: "/", disallow: ["/admin", "/api/", "/auth/", "/haru/apply", "/haru/classes/preview"] },
+  sitemap: "https://www.example.com/sitemap.xml",
+  host: "www.example.com",
+});
 const publicMetadata = createPageMetadata({ title: "MAY.ONE", description: "공식 안내", path: "/", contentAvailable: true });
 assert.deepEqual(publicMetadata.title, { absolute: "MAY.ONE" });
 assert.deepEqual(publicMetadata.alternates, { canonical: "/" });
@@ -150,14 +161,26 @@ assert.equal(unavailableMetadata.alternates, undefined);
 process.env.VERCEL_ENV = "preview";
 assert.equal(isIndexableDeployment(), false);
 assert.deepEqual(getRobotsMetadata(true), { index: false, follow: false });
+assert.equal(getSiteVerificationMetadata(), undefined);
+assert.deepEqual(robots(), { rules: { userAgent: "*", disallow: "/" } });
 process.env.VERCEL_ENV = "production";
 process.env.NEXT_PUBLIC_SITE_URL = "http://www.example.com";
 assert.equal(getCanonicalSiteUrl(), undefined);
 assert.equal(isIndexableDeployment(), false);
+assert.equal(getSiteVerificationMetadata(), undefined);
+assert.deepEqual(robots(), { rules: { userAgent: "*", disallow: "/" } });
+process.env.NEXT_PUBLIC_SITE_URL = "https://www.example.com";
+process.env.NAVER_SITE_VERIFICATION = "  ";
+assert.equal(getSiteVerificationMetadata(), undefined);
+delete process.env.NEXT_PUBLIC_SITE_URL;
+assert.equal(isIndexableDeployment(), false);
+assert.deepEqual(robots(), { rules: { userAgent: "*", disallow: "/" } });
 if (originalSiteUrl === undefined) delete process.env.NEXT_PUBLIC_SITE_URL;
 else process.env.NEXT_PUBLIC_SITE_URL = originalSiteUrl;
 if (originalVercelEnv === undefined) delete process.env.VERCEL_ENV;
 else process.env.VERCEL_ENV = originalVercelEnv;
+if (originalNaverVerification === undefined) delete process.env.NAVER_SITE_VERIFICATION;
+else process.env.NAVER_SITE_VERIFICATION = originalNaverVerification;
 
 assert.equal(getBranchBookingAvailability(branchFixtures[0]).enabled, true);
 assert.equal(getBranchBookingAvailability(branch("branch-draft", "초안", "서울", { publicationState: "draft" })).reason, "not-public");

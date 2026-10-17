@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
-import { getCanonicalSiteUrl, getRobotsMetadata } from "@/lib/seo";
+import { getCanonicalSiteUrl, getRobotsMetadata, getSiteVerificationMetadata } from "@/lib/seo";
 import "./globals.css";
 
 const canonicalSiteUrl = getCanonicalSiteUrl();
@@ -15,6 +15,7 @@ export const metadata: Metadata = {
   description: "MAY.ONE 공식 웹사이트입니다.",
   applicationName: "MAY.ONE",
   robots: getRobotsMetadata(false),
+  verification: getSiteVerificationMetadata(),
   openGraph: {
     type: "website",
     locale: "ko_KR",
